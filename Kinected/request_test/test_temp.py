@@ -1,7 +1,7 @@
 import requests
 
 temperature_data = {
-    'value': 25.5  # Exemple de valeur de température
+    'value': 22.5  # Exemple de valeur de température
 }
 
 response = requests.post('http://127.0.0.1:8000/api/temp_data/', data=temperature_data)
