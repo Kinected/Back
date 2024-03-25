@@ -1,14 +1,14 @@
-from django.http import HttpResponse
 # views.py
-
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from .models import Temperature
 from .models import Humidity
 from .models import Luminosity
+from django.shortcuts import render
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+    return render(request, 'index.html')
 
 @csrf_exempt
 def receive_temperature(request):

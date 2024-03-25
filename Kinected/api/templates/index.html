@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capteurs</title>
+    <style>
+        /* Votre CSS ici */
+    </style>
+</head>
+<body>
+    <h1>Données des capteurs</h1>
+    <div class="sensor" id="temperature">
+        <h2>Température</h2>
+        <p id="temperatureValue">En attente de données...</p>
+    </div>
+    <div class="sensor" id="humidity">
+        <h2>Humidité</h2>
+        <p id="humidityValue">En attente de données...</p>
+    </div>
+    <div class="sensor" id="light">
+        <h2>Luminosité</h2>
+        <p id="lightValue">En attente de données...</p>
+    </div>
+
+    <!-- Inclure jQuery pour les requêtes AJAX -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Script pour récupérer et afficher les données des capteurs -->
+    <script>
+        // Fonction pour mettre à jour les valeurs des capteurs
+        function updateSensorValue(sensorId, newValue) {
+            $("#" + sensorId + "Value").text(newValue);
+        }
+
+        // Fonction pour mettre à jour la valeur du capteur correspondant à l'URL spécifiée
+        function updateSensorFromURL(url, sensorId) {
+            $.get(url, function(data) {
+                updateSensorValue(sensorId, data[data.length - 1].value);
+            });
+        }
+
+        // Mettre à jour les valeurs initiales lors du chargement de la page
+        $(document).ready(function() {
+            updateSensorFromURL("/api/temp_data/", "temperature");
+            updateSensorFromURL("/api/humi_data/", "humidity");
+            updateSensorFromURL("/api/lum_data/", "light");
+        });
+
+        // Mettre à jour les valeurs périodiquement (toutes les 5 secondes)
+        setInterval(function() {
+            updateSensorFromURL("/api/temp_data/", "temperature");
+            updateSensorFromURL("/api/humi_data/", "humidity");
+            updateSensorFromURL("/api/lum_data/", "light");
+        }, 5000); // 5000 millisecondes = 5 secondes
+    </script>
+</body>
+</html>
