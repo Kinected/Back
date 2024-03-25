@@ -1,6 +1,11 @@
 import requests
 
-temperature_data = {'temperature': 25.5}  # Exemple de données de température
-response = requests.post('http://127.0.0.1:8000/temperature_data/', json=temperature_data)
+temperature_data = {
+    'value': 25.5  # Exemple de valeur de température
+}
 
-print(response.status_code)  # Vérifiez le code d'état de la réponse
+response = requests.post('http://127.0.0.1:8000/api/temp_data/', data=temperature_data)
+
+print("Status Code:", response.status_code)
+print("Content-Type:", response.headers['content-type'])
+#print("Response Body:", response.text)

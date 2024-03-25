@@ -1,5 +1,7 @@
+# models.py
+
 from django.db import models
 
-class TemperatureData(models.Model):
-    temperature = models.FloatField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+class Temperature(models.Model):
+    value = models.FloatField()
+    recorded_at = models.DateTimeField(auto_now_add=True)
