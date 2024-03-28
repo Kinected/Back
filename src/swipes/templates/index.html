@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Swipe demo</title>
+</head>
+<body class="flex flex-col gap-8 p-8">
+
+
+<h1 class="text-2xl font-bold">Swipe demo</h1>
+
+<div id="logs" class="flex flex-col gap-1 p-4 bg-slate-100 w-full min-h-100 rounded-lg">
+
+</div>
+
+<script>
+
+
+    const ws = new WebSocket(`ws://${window.location.host}/ws/swipes`);
+    const logs = document.getElementById('logs');
+
+    ws.onopen = function () {
+        console.log('connected');
+    };
+
+    ws.onmessage = function (e) {
+        console.log('Message received from server:', e.data);
+        logs.innerHTML += `<div class="text-sm">${e.data}</div>`;
+    };
+
+    ws.onclose = function () {
+        console.log('disconnected');
+    };
+
+    ws.onerror = function (e) {
+        console.log('error', e);
+    };
+</script>
+</body>
+</html>
