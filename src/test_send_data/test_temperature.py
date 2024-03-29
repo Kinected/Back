@@ -20,7 +20,7 @@ async def send_temperature():
             # Envoyer la température via WebSocket
             await websocket.send(temperature_json)
 
-            await asyncio.sleep(5)  # Attendre 5 secondes avant d'envoyer la prochaine température
+            await asyncio.sleep(2)  # Attendre 5 secondes avant d'envoyer la prochaine température
 
 def generate_random_temperature():
     # Simuler la génération de températures aléatoires entre 0 et 100 degrés Celsius

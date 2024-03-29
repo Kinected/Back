@@ -6,17 +6,23 @@ from channels.generic.websocket import WebsocketConsumer
 class TemperatureConsumer(WebsocketConsumer):
     def connect(self):
         self.accept()
+        # Add this connection to the group
+        async_to_sync(self.channel_layer.group_add)("sensors", self.channel_name)
 
     def disconnect(self, close_code):
-        pass
+        # Remove this connection from the group
+        async_to_sync(self.channel_layer.group_discard)("sensors", self.channel_name)
 
     def receive(self, text_data):
-        temperature_data = json.loads(text_data)
-        temperature = temperature_data['temperature']
+        text_data_json = json.loads(text_data)
+        # Send a message to all connections in the group
+        async_to_sync(self.channel_layer.group_send)(
+            "sensors",
+            {
+                "type": "temperature_message",
+                "text": json.dumps(text_data_json)
+            })
 
-        # Faire quelque chose avec la température, par exemple l'enregistrer dans la base de données
-
-        # Envoyer la température à tous les clients connectés
-        self.send(text_data=json.dumps({
-            'temperature': temperature
-        }))
+    # This method will receive messages from the group
+    def temperature_message(self, event):
+        self.send(text_data=event["text"])
