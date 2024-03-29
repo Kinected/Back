@@ -3,7 +3,7 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-class TemperatureConsumer(WebsocketConsumer):
+class SensorsConsumer(WebsocketConsumer):
     def connect(self):
         self.accept()
         # Add this connection to the group
@@ -19,10 +19,10 @@ class TemperatureConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             "sensors",
             {
-                "type": "temperature_message",
+                "type": "Sensors_message",
                 "text": json.dumps(text_data_json)
             })
 
     # This method will receive messages from the group
-    def temperature_message(self, event):
+    def Sensors_message(self, event):
         self.send(text_data=event["text"])

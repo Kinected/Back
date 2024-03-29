@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temperature Display</title>
+    <title>Sensors Display</title>
 </head>
 <body>
-    <h1>Temperature Display</h1>
+    <h1>Sensors Display</h1>
     <div id="temperature"></div>
 
     <script>
@@ -22,7 +22,7 @@
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
             const temperatureDiv = document.getElementById('temperature');
-            temperatureDiv.innerHTML = 'Temperature: ' + data.temperature + ' °C'; // Afficher la température
+            temperatureDiv.innerHTML = 'Sensors: ' + data.temperature + ' °C'; // Afficher la température
         };
 
         // Réagir aux erreurs de la connexion WebSocket
