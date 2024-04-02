@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import UserProfile, Face, Spotify_Credentials, Mauria_Credentials
 
-# Register your models here.
+admin.site.register(UserProfile)
+admin.site.register(Face)
+admin.site.register(Spotify_Credentials)
+admin.site.register(Mauria_Credentials)
