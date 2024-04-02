@@ -1,3 +1,7 @@
 django
 django-ninja
 channels[daphne]
+django-cors-headers
+dotenv
+httpx
+face_recognition

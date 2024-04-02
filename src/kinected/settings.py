@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "daphne",
     "api",
     "swipes",
+    "faces",
     "sensors",
     "django.contrib.admin",
     "django.contrib.auth",

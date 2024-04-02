@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/", api.urls),
     path("swipes/", include("swipes.urls")),
+    path("faces/", include("faces.urls")),
     path("sensors/", include("sensors.urls")),
 
 ]
