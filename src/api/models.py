@@ -5,71 +5,73 @@ from django.contrib.auth.hashers import make_password
 class Face(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
 
-    # Neutral Face
-    neutral = models.FloatField()
+    test = models.CharField(max_length=1024, blank=True)
 
-    # Brow Movements
-    browDownLeft = models.FloatField()
-    browDownRight = models.FloatField()
-    browInnerUp = models.FloatField()
-    browOuterUpLeft = models.FloatField()
-    browOuterUpRight = models.FloatField()
+    # # Neutral Face
+    # neutral = models.FloatField()
 
-    # Cheek Movements
-    cheekPuff = models.FloatField()
-    cheekSquintLeft = models.FloatField()
-    cheekSquintRight = models.FloatField()
+    # # Brow Movements
+    # browDownLeft = models.FloatField()
+    # browDownRight = models.FloatField()
+    # browInnerUp = models.FloatField()
+    # browOuterUpLeft = models.FloatField()
+    # browOuterUpRight = models.FloatField()
 
-    # Eye Movements
-    eyeBlinkLeft = models.FloatField()
-    eyeBlinkRight = models.FloatField()
-    eyeLookDownLeft = models.FloatField()
-    eyeLookDownRight = models.FloatField()
-    eyeLookInLeft = models.FloatField()
-    eyeLookInRight = models.FloatField()
-    eyeLookOutLeft = models.FloatField()
-    eyeLookOutRight = models.FloatField()
-    eyeLookUpLeft = models.FloatField()
-    eyeLookUpRight = models.FloatField()
-    eyeSquintLeft = models.FloatField()
-    eyeSquintRight = models.FloatField()
-    eyeWideLeft = models.FloatField()
-    eyeWideRight = models.FloatField()
+    # # Cheek Movements
+    # cheekPuff = models.FloatField()
+    # cheekSquintLeft = models.FloatField()
+    # cheekSquintRight = models.FloatField()
 
-    # Jaw Movements
-    jawForward = models.FloatField()
-    jawLeft = models.FloatField()
-    jawOpen = models.FloatField()
-    jawRight = models.FloatField()
+    # # Eye Movements
+    # eyeBlinkLeft = models.FloatField()
+    # eyeBlinkRight = models.FloatField()
+    # eyeLookDownLeft = models.FloatField()
+    # eyeLookDownRight = models.FloatField()
+    # eyeLookInLeft = models.FloatField()
+    # eyeLookInRight = models.FloatField()
+    # eyeLookOutLeft = models.FloatField()
+    # eyeLookOutRight = models.FloatField()
+    # eyeLookUpLeft = models.FloatField()
+    # eyeLookUpRight = models.FloatField()
+    # eyeSquintLeft = models.FloatField()
+    # eyeSquintRight = models.FloatField()
+    # eyeWideLeft = models.FloatField()
+    # eyeWideRight = models.FloatField()
 
-    # Mouth Movements
-    mouthClose = models.FloatField()
-    mouthDimpleLeft = models.FloatField()
-    mouthDimpleRight = models.FloatField()
-    mouthFrownLeft = models.FloatField()
-    mouthFrownRight = models.FloatField()
-    mouthFunnel = models.FloatField()
-    mouthLeft = models.FloatField()
-    mouthLowerDownLeft = models.FloatField()
-    mouthLowerDownRight = models.FloatField()
-    mouthPressLeft = models.FloatField()
-    mouthPressRight = models.FloatField()
-    mouthPucker = models.FloatField()
-    mouthRight = models.FloatField()
-    mouthRollLower = models.FloatField()
-    mouthRollUpper = models.FloatField()
-    mouthShrugLower = models.FloatField()
-    mouthShrugUpper = models.FloatField()
-    mouthSmileLeft = models.FloatField()
-    mouthSmileRight = models.FloatField()
-    mouthStretchLeft = models.FloatField()
-    mouthStretchRight = models.FloatField()
-    mouthUpperUpLeft = models.FloatField()
-    mouthUpperUpRight = models.FloatField()
+    # # Jaw Movements
+    # jawForward = models.FloatField()
+    # jawLeft = models.FloatField()
+    # jawOpen = models.FloatField()
+    # jawRight = models.FloatField()
 
-    # Nose Movements
-    noseSneerLeft = models.FloatField()
-    noseSneerRight = models.FloatField()
+    # # Mouth Movements
+    # mouthClose = models.FloatField()
+    # mouthDimpleLeft = models.FloatField()
+    # mouthDimpleRight = models.FloatField()
+    # mouthFrownLeft = models.FloatField()
+    # mouthFrownRight = models.FloatField()
+    # mouthFunnel = models.FloatField()
+    # mouthLeft = models.FloatField()
+    # mouthLowerDownLeft = models.FloatField()
+    # mouthLowerDownRight = models.FloatField()
+    # mouthPressLeft = models.FloatField()
+    # mouthPressRight = models.FloatField()
+    # mouthPucker = models.FloatField()
+    # mouthRight = models.FloatField()
+    # mouthRollLower = models.FloatField()
+    # mouthRollUpper = models.FloatField()
+    # mouthShrugLower = models.FloatField()
+    # mouthShrugUpper = models.FloatField()
+    # mouthSmileLeft = models.FloatField()
+    # mouthSmileRight = models.FloatField()
+    # mouthStretchLeft = models.FloatField()
+    # mouthStretchRight = models.FloatField()
+    # mouthUpperUpLeft = models.FloatField()
+    # mouthUpperUpRight = models.FloatField()
+
+    # # Nose Movements
+    # noseSneerLeft = models.FloatField()
+    # noseSneerRight = models.FloatField()
 
     def __str__(self):
         return f"Face Data for user_id {self.user.id}"
@@ -96,10 +98,6 @@ class Mauria_Credentials(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
     email = models.EmailField(max_length=50, unique=True)
     mdp = models.CharField(max_length=128)
-
-    def save(self, *args, **kwargs):
-        self.mdp = make_password(self.mdp)
-        super(Mauria_Credentials, self).save(*args, **kwargs)
-
+    
     def __str__(self):
         return f"Mauria Credentials for {self.email}"
