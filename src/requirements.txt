@@ -1,4 +1,7 @@
 django
 django-ninja
 channels[daphne]
+python-dotenv
+httpx
+django-cors-headers
 channels_redis

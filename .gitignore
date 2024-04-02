@@ -132,9 +132,7 @@ celerybeat.pid
 
 # Environments
 pyenv
-.env
 .venv
-env/
 venv/
 ENV/
 env.bak/
