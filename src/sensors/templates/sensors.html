@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensors Display</title>
+</head>
+<body>
+    <h1>Sensors Display</h1>
+    <div id="temperature"></div>
+    <div id="humidity"></div>
+
+    <script>
+        // Établir la connexion WebSocket
+        const socket = new WebSocket('ws://localhost:8000/ws/sensors'); // Assurez-vous de remplacer l'URL par votre propre URL WebSocket
+
+        // Réagir à l'ouverture de la connexion WebSocket
+        socket.onopen = function(event) {
+            console.log('WebSocket connection opened.');
+        };
+
+        // Réagir à la réception de messages WebSocket
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const temperatureDiv = document.getElementById('temperature');
+            const humidityDiv = document.getElementById('humidity');
+            temperatureDiv.innerHTML = 'Temperature: ' + data.temperature + ' °C'; // Afficher la température
+            humidityDiv.innerHTML = 'Humidity: ' + data.humidity + ' %'; // Afficher l'humidité
+        };
+
+        // Réagir aux erreurs de la connexion WebSocket
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+
+        // Réagir à la fermeture de la connexion WebSocket
+        socket.onclose = function(event) {
+            console.log('WebSocket connection closed.');
+        };
+    </script>
+</body>
+</html>

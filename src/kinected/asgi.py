@@ -17,6 +17,7 @@ from django.core.asgi import get_asgi_application
 from swipes.routing import websocket_urlpatterns as swipes_patterns
 from faces.routing import websocket_urlpatterns as faces_patterns
 
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "kinected.settings")
 
 application = ProtocolTypeRouter(
