@@ -8,6 +8,7 @@ import httpx
 import json
 from base64 import b64decode
 import face_recognition
+import numpy as np
 
 
 from api.models import UserProfile, Spotify_Credentials, Mauria_Credentials, Face
@@ -101,14 +102,14 @@ def upload(request, img: ImageSchema):
             f.close()
 
         image = face_recognition.load_image_file("images/image.png")
-        face_locations = face_recognition.face_locations(image)[0]
-        print(face_locations)
+        face_encoding = face_recognition.face_encodings(image)[0]
+        print(face_encoding)
 
         user = UserProfile.objects.create()
         user.save()
 
         face = Face.objects.create(user=user)
-        face.test = str(face_locations)
+        face.set_values(face_encoding)
         face.save()
 
         return {"success": True}
@@ -127,4 +128,37 @@ def get_user(request, userID: int):
         "firstname": user.firstname,
         "lastname": user.lastname,    
     }
+
+@api.get("/users/faces")
+def get_users(request):
+    users = UserProfile.objects.all()
+    data = []
+    for user in users:
+        data.append({
+            "id": user.id,
+            "face": Face.objects.get(user=user).get_values(),
+        })
+
+      
+    return data
+
+
+@api.get("/ObamaFace")
+def test(request):
+    '''
+    all users are updated with the face of Obama
+
+    '''
+    obama_image = face_recognition.load_image_file("images/obama.jpg")
+    obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+    obama_face_encoding = obama_face_encoding.tolist()
+
+    users = UserProfile.objects.all()
+    for user in users:
+        face = Face.objects.get(user=user)
+        face.set_values(obama_face_encoding)
+        face.save()
+    
+    return {"success": True}
+
 
