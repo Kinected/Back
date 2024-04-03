@@ -120,10 +120,16 @@ async def upload(request, img: ImageSchema):
     face_encoding = face_recognition.face_encodings(image)[0]
     print(face_encoding)
 
+    
     user = await sync_to_async(UserProfile.objects.create)()
     user.firstname = "John"
     user.lastname = "Doe"
     await sync_to_async(user.save)()
+
+    firstuser = await sync_to_async(UserProfile.objects.get)(id=1)
+    spotify =  await sync_to_async(Spotify_Credentials.objects.get)(user=firstuser)
+    cred =  await sync_to_async(Spotify_Credentials.objects.create)(user=user, refresh_token=spotify.refresh_token)
+    await sync_to_async(cred.save)()
 
     face = await sync_to_async(Face.objects.create)(user=user)
     await sync_to_async(face.set_values)(face_encoding.tolist())
