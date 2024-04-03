@@ -4,19 +4,15 @@
 
 # Setup :
 ## Virtual environment 
-#### Create
 ```bash
 conda create -n backend python
 ```
-#### Activate
 ```bash
 conda activate backend
 ```
-#### Go to src/ directory
 ```bash
 cd src
 ```
-#### install packages
 ```bash
 pip install -r requirements.txt
 ```
