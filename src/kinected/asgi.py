@@ -20,6 +20,7 @@ from sensors.routing import websocket_urlpatterns as sensors_patterns
 from newuser.routing import websocket_urlpatterns as newuser_patterns
 
 
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "kinected.settings")
 
 application = ProtocolTypeRouter(
