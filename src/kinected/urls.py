@@ -25,5 +25,6 @@ urlpatterns = [
     path("swipes/", include("swipes.urls")),
     path("faces/", include("faces.urls")),
     path("sensors/", include("sensors.urls")),
+    path("users/", include("newuser.urls")),
 
 ]
