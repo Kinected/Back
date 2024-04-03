@@ -27,7 +27,11 @@ python manage.py makemigrations api
 ```bash
 python manage.py migrate
 ```
-## Lauch App
+## Launch Docker
+```bash
+docker run --rm -p 6379:6379 redis:7
+```
+## Launch App
 ```bash
 python manage.py runserver
 ```
