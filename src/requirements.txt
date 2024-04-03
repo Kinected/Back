@@ -5,3 +5,5 @@ django-cors-headers
 python-dotenv
 httpx
 face_recognition
+websockets
+channels-redis
