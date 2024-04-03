@@ -24,11 +24,12 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.id} {self.firstname} {self.lastname}"
+    
 
 
 class Spotify_Credentials(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
-    refresh_token = models.CharField(max_length=255, unique=True)  
+    refresh_token = models.CharField(max_length=255)  
 
     def __str__(self):
         return f"Spotify Credentials for {self.user.firstname} {self.user.lastname}"

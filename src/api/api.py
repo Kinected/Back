@@ -92,6 +92,7 @@ async def send_message(id, face):
     global websocket
     uri = "ws://localhost:8000/ws/new_user"
     payload = {
+        "type" : True,
         "userID": id,
         "face" : face
     }
