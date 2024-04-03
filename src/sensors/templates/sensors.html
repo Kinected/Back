@@ -9,6 +9,7 @@
     <h1>Sensors Display</h1>
     <div id="temperature"></div>
     <div id="humidity"></div>
+    <div id="luminosity"></div>
 
     <script>
         // Établir la connexion WebSocket
@@ -24,8 +25,10 @@
             const data = JSON.parse(event.data);
             const temperatureDiv = document.getElementById('temperature');
             const humidityDiv = document.getElementById('humidity');
+            const luminosityDiv = document.getElementById('luminosity');
             temperatureDiv.innerHTML = 'Temperature: ' + data.temperature + ' °C'; // Afficher la température
             humidityDiv.innerHTML = 'Humidity: ' + data.humidity + ' %'; // Afficher l'humidité
+            luminosityDiv.innerHTML = 'Luminosity: ' + data.luminosity + ' lux'; // Afficher la luminosité
         };
 
         // Réagir aux erreurs de la connexion WebSocket

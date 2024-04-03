@@ -17,7 +17,7 @@ api = NinjaAPI()
 load_dotenv()
 
 def get_access_token(refresh_token):
-    client_creds = f"{os.getenv("CLIENT_ID")}:{os.getenv("CLIENT_SECRET")}"
+    client_creds = f"{os.getenv('CLIENT_ID')}:{os.getenv('CLIENT_SECRET')}"
     client_creds_b64 = base64.b64encode(client_creds.encode())
     
     endpoint = "https://accounts.spotify.com/api/token"
