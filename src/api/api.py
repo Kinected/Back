@@ -139,6 +139,49 @@ def get_users_face(request):
     data = [{"id": user.id, "face": Face.objects.get(user=user).get_values()} for user in users]
     return data
 
+class AudioSchema(Schema):
+    audio: str
+    
+# @api.post("/audio")
+# def audio (request, audio: AudioSchema):
+#     print("audio REQUEST :", audio.audio)
+#     audio_data = base64.b64decode(audio.audio)
+#     print("audio :", audio_data)
+
+#     with open('audio.wav', 'wb') as f:
+#         f.write(audio_data)
+
+#     return {"success": True}
+
+@api.post("/audio")
+def audio (request):
+    audio_file = request.FILES['audio']
+    print("audio :", audio_file)
+
+    # Save the file to disk
+    with open('audio.mp3', 'wb+') as destination:
+        for chunk in audio_file.chunks():
+            destination.write(chunk)
+
+    # Now read the file
+    with open('audio.mp3', 'rb') as f:
+        audio_data = f.read()
+        print("audio :", audio_data)
+        
+        ######################### WHISPER #########################
+        from openai import OpenAI
+        client = OpenAI()
+
+        audio_file= open("audio.mp3", "rb")
+        transcription = client.audio.transcriptions.create(
+        model="whisper-1", 
+        file=audio_file
+        )
+        nom = transcription.text
+        print(nom)
+        
+
+    return {"success": True}
 
 ################################################################################################
 ##########################################Debug routes##########################################
