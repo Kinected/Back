@@ -11,7 +11,7 @@ from base64 import b64decode
 import face_recognition
 import websockets
 from io import BytesIO
-from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings
 import numpy as np
 
 api = NinjaAPI()
@@ -68,12 +68,27 @@ async def get_mauria_courses(username, password):
     return r.json()
 
 
-@api.get("/mauria")
-async def mauria(request, userID: int):
+@api.get("/mauria/update")
+async def update_mauria(request, userID: int):
     user = await sync_to_async(UserProfile.objects.get)(id=int(userID))
     mauria = await sync_to_async(Mauria_Credentials.objects.get)(user=user)
-    return await get_mauria_courses(mauria.email, mauria.mdp)
+    planning = await get_mauria_courses(mauria.email, mauria.mdp)
 
+    # Update the user's planning in the database
+    user_planning, created = await sync_to_async(Mauria_Plannings.objects.get_or_create)(user=user)
+    await sync_to_async(user_planning.set_planning)(planning)
+    await sync_to_async(user_planning.save)()
+
+    return planning
+
+@api.get("/mauria")
+async def get_mauria(request, userID: int):
+    try :
+        user = await sync_to_async(UserProfile.objects.get)(id=int(userID))
+        user_planning = await sync_to_async(Mauria_Plannings.objects.get)(user=user)
+        return user_planning.get_planning()
+    except :
+        return []
 
 
 async def send_websocket_create_user(id, face):
@@ -104,8 +119,8 @@ async def post_user(request, img: ImageSchema):
     face_encoding = face_recognition.face_encodings(image_np)[0]
 
     user = await sync_to_async(UserProfile.objects.create)()
-    user.firstname = "John"
-    user.lastname = "Doe"
+    user.firstname = "Utilisateur" + str(user.id)
+    user.lastname = ""
     await sync_to_async(user.save)()
 
     face = await sync_to_async(Face.objects.create)(user=user)
@@ -138,6 +153,7 @@ def get_users_face(request):
     users = UserProfile.objects.all()
     data = [{"id": user.id, "face": Face.objects.get(user=user).get_values()} for user in users]
     return data
+
 
 
 ################################################################################################
