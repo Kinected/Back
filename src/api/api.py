@@ -13,6 +13,7 @@ import websockets
 from io import BytesIO
 from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face
 import numpy as np
+from openai import OpenAI
 
 api = NinjaAPI()
 websocket = None
@@ -139,22 +140,9 @@ def get_users_face(request):
     data = [{"id": user.id, "face": Face.objects.get(user=user).get_values()} for user in users]
     return data
 
-class AudioSchema(Schema):
-    audio: str
-    
-# @api.post("/audio")
-# def audio (request, audio: AudioSchema):
-#     print("audio REQUEST :", audio.audio)
-#     audio_data = base64.b64decode(audio.audio)
-#     print("audio :", audio_data)
 
-#     with open('audio.wav', 'wb') as f:
-#         f.write(audio_data)
-
-#     return {"success": True}
-
-@api.post("/audio")
-def audio (request):
+@api.post("/audio/firstname")
+def audio (request, userID : str):
     audio_file = request.FILES['audio']
     print("audio :", audio_file)
 
@@ -167,19 +155,26 @@ def audio (request):
     with open('audio.mp3', 'rb') as f:
         audio_data = f.read()
         print("audio :", audio_data)
-        
+    
+            
         ######################### WHISPER #########################
-        from openai import OpenAI
+        ###########################################################
         client = OpenAI()
 
         audio_file= open("audio.mp3", "rb")
         transcription = client.audio.transcriptions.create(
         model="whisper-1", 
-        file=audio_file
+        file=audio_file,
         )
         nom = transcription.text
-        print(nom)
         
+        user = UserProfile.objects.get(id=int(userID))
+        user.firstname = nom
+        user.save()
+        
+        print(nom)
+        ######################### WHISPER #########################
+        ###########################################################
 
     return {"success": True}
 
