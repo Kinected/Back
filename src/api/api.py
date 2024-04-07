@@ -44,16 +44,6 @@ def spotify(request, userID: int):
     return access_token
 
 
-@api.get("/user")
-def user(request, userID: int):
-    userID = int(userID)
-    user = UserProfile.objects.get(id=userID)
-    return {
-        "id": user.id,
-        "firstname": user.firstname,
-        "lastname": user.lastname,
-    }
-
 
 async def get_mauria_courses(username, password):
     endpoint = "https://mauriaapi.fly.dev/planning?start=2024-04-02"
@@ -129,9 +119,15 @@ async def post_user(request, img: ImageSchema):
 
     # A supprimer sur du long terme (refresh_token de sam car il est premium)
     first_user = await sync_to_async(UserProfile.objects.get)(id=1)
+
     first_user_spotify = await sync_to_async(Spotify_Credentials.objects.get)(user=first_user)
     user_spotify = await sync_to_async(Spotify_Credentials.objects.create)(user=user, refresh_token=first_user_spotify.refresh_token)
     await sync_to_async(user_spotify.save)()
+
+    first_user_mauria = await sync_to_async(Mauria_Credentials.objects.get)(user=first_user)
+    user_mauria = await sync_to_async(Mauria_Credentials.objects.create)(user=user, email=first_user_mauria.email, mdp=first_user_mauria.mdp)
+    await sync_to_async(user_mauria.save)()
+    ##########
 
     await send_websocket_create_user(user.id, face.get_values())
 
@@ -140,11 +136,16 @@ async def post_user(request, img: ImageSchema):
 
 @api.get("/user")
 def get_user(request, userID: int):
+    print(userID)
     user = UserProfile.objects.get(id=int(userID))
+    gotSpotify = Spotify_Credentials.objects.filter(user=user).exists()
+    gotMauria = Mauria_Credentials.objects.filter(user=user).exists()
     return {
         "id": user.id,
         "firstname": user.firstname,
         "lastname": user.lastname,
+        "gotSpotify": gotSpotify,
+        "gotMauria": gotMauria
     }
 
 
