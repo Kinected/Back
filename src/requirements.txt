@@ -7,3 +7,4 @@ httpx
 face_recognition
 websockets
 channels-redis
+openai

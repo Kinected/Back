@@ -13,6 +13,7 @@ import websockets
 from io import BytesIO
 from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings
 import numpy as np
+from openai import OpenAI
 
 api = NinjaAPI()
 websocket = None
@@ -156,6 +157,43 @@ def get_users_face(request):
     return data
 
 
+
+@api.post("/audio/firstname")
+def audio (request, userID : str):
+    audio_file = request.FILES['audio']
+    print("audio :", audio_file)
+
+    # Save the file to disk
+    with open('audio.mp3', 'wb+') as destination:
+        for chunk in audio_file.chunks():
+            destination.write(chunk)
+
+    # Now read the file
+    with open('audio.mp3', 'rb') as f:
+        audio_data = f.read()
+        print("audio :", audio_data)
+    
+            
+        ######################### WHISPER #########################
+        ###########################################################
+        client = OpenAI()
+
+        audio_file= open("audio.mp3", "rb")
+        transcription = client.audio.transcriptions.create(
+        model="whisper-1", 
+        file=audio_file,
+        )
+        nom = transcription.text
+        
+        user = UserProfile.objects.get(id=int(userID))
+        user.firstname = nom
+        user.save()
+        
+        print(nom)
+        ######################### WHISPER #########################
+        ###########################################################
+
+    return {"success": True}
 
 ################################################################################################
 ##########################################Debug routes##########################################
