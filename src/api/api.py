@@ -180,19 +180,29 @@ def audio (request, userID : str):
 
         audio_file= open("audio.mp3", "rb")
         transcription = client.audio.transcriptions.create(
-        model="whisper-1", 
+        model="whisper-1",
         file=audio_file,
         )
         nom = transcription.text
-        
-        user = UserProfile.objects.get(id=int(userID))
-        user.firstname = nom
-        user.save()
+
+        # user = UserProfile.objects.get(id=int(userID))
+        # user.firstname = nom
+        # user.save()
         
         print(nom)
         ######################### WHISPER #########################
         ###########################################################
 
+    return {"firstname": nom}
+class UpdateFirstnameSchema(Schema):
+    userID: int
+    firstname: str
+
+@api.put("/user/firstname")
+def put_firstname(request, payload: UpdateFirstnameSchema):
+    user = UserProfile.objects.get(id=payload.userID)
+    user.firstname = payload.firstname
+    user.save()
     return {"success": True}
 
 ################################################################################################
