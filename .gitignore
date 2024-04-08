@@ -172,3 +172,4 @@ cython_debug/
 .idea/
 
 src/audio.mp3
+src/awadji

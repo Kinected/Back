@@ -11,7 +11,7 @@ from base64 import b64decode
 import face_recognition
 import websockets
 from io import BytesIO
-from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Credentials
 import numpy as np
 from openai import OpenAI
 
@@ -204,6 +204,34 @@ def put_firstname(request, payload: UpdateFirstnameSchema):
     user.firstname = payload.firstname
     user.save()
     return {"success": True}
+
+
+def get_borne_data(borne_id):
+    api_key = 'bf7484aaeefeaf8647edb32b2d059625694366b1d80c3a35182fa0fe'
+    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/vlille-realtime/records?limit=20&refine=libelle%3A%2228%22&refine=nom%3A%22PALAIS%20RAMEAU%22"
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(response.status_code)
+        return None
+
+
+@api.get("/ilevia/borne")
+def get_borne_info(request, user_id: int):
+    user = UserProfile.objects.get(id = int(user_id))
+    ilevia = Ilevia_Credentials.objects.get(user=user)
+    borne_data = get_borne_data(ilevia.borne_id)
+    print(borne_data)
+    if borne_data:
+        return {
+            "nbPlacesDispo": borne_data['results'][0]['nbplacesdispo'],
+            "nbVelosDispo": borne_data['results'][0]['nbvelosdispo']
+        }
+    else:
+        return {"error": "Impossible de récupérer les données de la borne"}
+
 
 ################################################################################################
 ##########################################Debug routes##########################################
