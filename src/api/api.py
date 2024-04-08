@@ -167,12 +167,6 @@ def get_trancription(audio_file):
     # Now read the file
     with open('audio.mp3', 'rb') as f:
         audio_data = f.read()
-        print("audio :", audio_data)
-
-        ######################### WHISPER #########################
-        ###########################################################
-        client = OpenAI()
-
         audio_file= open("audio.mp3", "rb")
         transcription = client.audio.transcriptions.create(
             model="whisper-1",
@@ -181,10 +175,6 @@ def get_trancription(audio_file):
         return transcription.text
 
 def get_response(question):
-
-    api_key = os.environ.get("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")
-    client = OpenAI(api_key=api_key)
-
     chat_completion = client.chat.completions.create(
         messages=[
             {
@@ -203,32 +193,21 @@ def get_response(question):
 @api.post("/audio/transcription")
 def audio (request):
     audio_file = request.FILES['audio']
-    print("Fichier audio transcription")
-    print("audio :", audio_file)
-
     transcription = get_trancription(audio_file)
+    return {"transcription":  transcription}
 
 
-    return {"transcription": transcription}
+@api.post("/audio/chatvoc")
+def audio (request):
+    audio_file = request.FILES['audio']
+    question = get_trancription(audio_file)
+    response = get_response(question)
+    return {"question": question , "response": response}
 
 
 class UpdateFirstnameSchema(Schema):
     userID: int
     firstname: str
-
-@api.post("/audio/chatvoc")
-def audio (request, userID : str):
-    audio_file = request.FILES['audio']
-    print("Fichier audio question")
-    print("audio :", audio_file)
-
-
-    question = get_trancription(audio_file)
-    reponse = get_response(question)
-
-    print("la question et la réponse")
-
-    return {"question": question , "response": reponse}
 
 @api.put("/user/firstname")
 def put_firstname(request, payload: UpdateFirstnameSchema):
