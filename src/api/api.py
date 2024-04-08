@@ -111,7 +111,7 @@ async def post_user(request, img: ImageSchema):
     face_encoding = face_recognition.face_encodings(image_np)[0]
 
     user = await sync_to_async(UserProfile.objects.create)()
-    user.firstname = "Utilisateur" + str(user.id)
+    user.firstname = ""
     user.lastname = ""
     await sync_to_async(user.save)()
 
