@@ -42,3 +42,17 @@ class Mauria_Credentials(models.Model):
     
     def __str__(self):
         return f"Mauria Credentials for {self.email}"
+
+
+class Mauria_Plannings(models.Model):
+    user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
+    planning = models.TextField(default='[]')
+
+    def set_planning(self, array):
+        self.planning = json.dumps(array)
+
+    def get_planning(self):
+        return json.loads(self.planning)
+
+    def __str__(self):
+        return f"Plannings for {self.user.id} {self.user.firstname} {self.user.lastname}"

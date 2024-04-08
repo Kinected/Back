@@ -11,7 +11,7 @@ from base64 import b64decode
 import face_recognition
 import websockets
 from io import BytesIO
-from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings
 import numpy as np
 from openai import OpenAI
 
@@ -45,16 +45,6 @@ def spotify(request, userID: int):
     return access_token
 
 
-@api.get("/user")
-def user(request, userID: int):
-    userID = int(userID)
-    user = UserProfile.objects.get(id=userID)
-    return {
-        "id": user.id,
-        "firstname": user.firstname,
-        "lastname": user.lastname,
-    }
-
 
 async def get_mauria_courses(username, password):
     endpoint = "https://mauriaapi.fly.dev/planning?start=2024-04-02"
@@ -69,12 +59,27 @@ async def get_mauria_courses(username, password):
     return r.json()
 
 
-@api.get("/mauria")
-async def mauria(request, userID: int):
+@api.get("/mauria/update")
+async def update_mauria(request, userID: int):
     user = await sync_to_async(UserProfile.objects.get)(id=int(userID))
     mauria = await sync_to_async(Mauria_Credentials.objects.get)(user=user)
-    return await get_mauria_courses(mauria.email, mauria.mdp)
+    planning = await get_mauria_courses(mauria.email, mauria.mdp)
 
+    # Update the user's planning in the database
+    user_planning, created = await sync_to_async(Mauria_Plannings.objects.get_or_create)(user=user)
+    await sync_to_async(user_planning.set_planning)(planning)
+    await sync_to_async(user_planning.save)()
+
+    return planning
+
+@api.get("/mauria")
+async def get_mauria(request, userID: int):
+    try :
+        user = await sync_to_async(UserProfile.objects.get)(id=int(userID))
+        user_planning = await sync_to_async(Mauria_Plannings.objects.get)(user=user)
+        return user_planning.get_planning()
+    except :
+        return []
 
 
 async def send_websocket_create_user(id, face):
@@ -105,8 +110,8 @@ async def post_user(request, img: ImageSchema):
     face_encoding = face_recognition.face_encodings(image_np)[0]
 
     user = await sync_to_async(UserProfile.objects.create)()
-    user.firstname = "John"
-    user.lastname = "Doe"
+    user.firstname = "Utilisateur" + str(user.id)
+    user.lastname = ""
     await sync_to_async(user.save)()
 
     face = await sync_to_async(Face.objects.create)(user=user)
@@ -115,9 +120,15 @@ async def post_user(request, img: ImageSchema):
 
     # A supprimer sur du long terme (refresh_token de sam car il est premium)
     first_user = await sync_to_async(UserProfile.objects.get)(id=1)
+
     first_user_spotify = await sync_to_async(Spotify_Credentials.objects.get)(user=first_user)
     user_spotify = await sync_to_async(Spotify_Credentials.objects.create)(user=user, refresh_token=first_user_spotify.refresh_token)
     await sync_to_async(user_spotify.save)()
+
+    first_user_mauria = await sync_to_async(Mauria_Credentials.objects.get)(user=first_user)
+    user_mauria = await sync_to_async(Mauria_Credentials.objects.create)(user=user, email=first_user_mauria.email, mdp=first_user_mauria.mdp)
+    await sync_to_async(user_mauria.save)()
+    ##########
 
     await send_websocket_create_user(user.id, face.get_values())
 
@@ -126,11 +137,16 @@ async def post_user(request, img: ImageSchema):
 
 @api.get("/user")
 def get_user(request, userID: int):
+    print(userID)
     user = UserProfile.objects.get(id=int(userID))
+    gotSpotify = Spotify_Credentials.objects.filter(user=user).exists()
+    gotMauria = Mauria_Credentials.objects.filter(user=user).exists()
     return {
         "id": user.id,
         "firstname": user.firstname,
         "lastname": user.lastname,
+        "gotSpotify": gotSpotify,
+        "gotMauria": gotMauria
     }
 
 
@@ -139,6 +155,7 @@ def get_users_face(request):
     users = UserProfile.objects.all()
     data = [{"id": user.id, "face": Face.objects.get(user=user).get_values()} for user in users]
     return data
+
 
 
 @api.post("/audio/firstname")
@@ -163,19 +180,29 @@ def audio (request, userID : str):
 
         audio_file= open("audio.mp3", "rb")
         transcription = client.audio.transcriptions.create(
-        model="whisper-1", 
+        model="whisper-1",
         file=audio_file,
         )
         nom = transcription.text
-        
-        user = UserProfile.objects.get(id=int(userID))
-        user.firstname = nom
-        user.save()
+
+        # user = UserProfile.objects.get(id=int(userID))
+        # user.firstname = nom
+        # user.save()
         
         print(nom)
         ######################### WHISPER #########################
         ###########################################################
 
+    return {"firstname": nom}
+class UpdateFirstnameSchema(Schema):
+    userID: int
+    firstname: str
+
+@api.put("/user/firstname")
+def put_firstname(request, payload: UpdateFirstnameSchema):
+    user = UserProfile.objects.get(id=payload.userID)
+    user.firstname = payload.firstname
+    user.save()
     return {"success": True}
 
 ################################################################################################
