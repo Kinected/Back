@@ -16,10 +16,10 @@ import numpy as np
 from openai import OpenAI
 
 api = NinjaAPI()
+websocket = None
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-websocket = None
 
 def get_spotify_access_token(refresh_token):
     client_creds = f"{os.getenv('CLIENT_ID')}:{os.getenv('CLIENT_SECRET')}"
@@ -158,12 +158,7 @@ def get_users_face(request):
     return data
 
 
-
-@api.post("/audio/transcription")
-def audio (request):
-    audio_file = request.FILES['audio']
-    print("audio :", audio_file)
-
+def get_trancription(audio_file):
     # Save the file to disk
     with open('audio.mp3', 'wb+') as destination:
         for chunk in audio_file.chunks():
@@ -173,30 +168,67 @@ def audio (request):
     with open('audio.mp3', 'rb') as f:
         audio_data = f.read()
         print("audio :", audio_data)
-    
-            
+
         ######################### WHISPER #########################
         ###########################################################
+        client = OpenAI()
+
         audio_file= open("audio.mp3", "rb")
         transcription = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=audio_file,
+            model="whisper-1",
+            file=audio_file,
         )
-        transcription = transcription.text
+        return transcription.text
+
+def get_response(question):
+
+    api_key = os.environ.get("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")
+    client = OpenAI(api_key=api_key)
+
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": question,
+            }
+        ],
+        model="gpt-3.5-turbo",
+    )
+
+    response = chat_completion.choices[0].message.content
+
+    return response
 
 
-        # user = UserProfile.objects.get(id=int(userID))
-        # user.firstname = nom
-        # user.save()
-        
-        print(transcription)
-        ######################### WHISPER #########################
-        ###########################################################
+@api.post("/audio/transcription")
+def audio (request):
+    audio_file = request.FILES['audio']
+    print("Fichier audio transcription")
+    print("audio :", audio_file)
+
+    transcription = get_trancription(audio_file)
+
 
     return {"transcription": transcription}
+
+
 class UpdateFirstnameSchema(Schema):
     userID: int
     firstname: str
+
+@api.post("/audio/chatvoc")
+def audio (request, userID : str):
+    audio_file = request.FILES['audio']
+    print("Fichier audio question")
+    print("audio :", audio_file)
+
+
+    question = get_trancription(audio_file)
+    reponse = get_response(question)
+
+    print("la question et la réponse")
+
+    return {"question": question , "response": reponse}
 
 @api.put("/user/firstname")
 def put_firstname(request, payload: UpdateFirstnameSchema):
