@@ -16,9 +16,10 @@ import numpy as np
 from openai import OpenAI
 
 api = NinjaAPI()
-websocket = None
 load_dotenv()
 
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+websocket = None
 
 def get_spotify_access_token(refresh_token):
     client_creds = f"{os.getenv('CLIENT_ID')}:{os.getenv('CLIENT_SECRET')}"
@@ -158,8 +159,8 @@ def get_users_face(request):
 
 
 
-@api.post("/audio/firstname")
-def audio (request, userID : str):
+@api.post("/audio/transcription")
+def audio (request):
     audio_file = request.FILES['audio']
     print("audio :", audio_file)
 
@@ -176,24 +177,23 @@ def audio (request, userID : str):
             
         ######################### WHISPER #########################
         ###########################################################
-        client = OpenAI()
-
         audio_file= open("audio.mp3", "rb")
         transcription = client.audio.transcriptions.create(
         model="whisper-1",
         file=audio_file,
         )
-        nom = transcription.text
+        transcription = transcription.text
+
 
         # user = UserProfile.objects.get(id=int(userID))
         # user.firstname = nom
         # user.save()
         
-        print(nom)
+        print(transcription)
         ######################### WHISPER #########################
         ###########################################################
 
-    return {"firstname": nom}
+    return {"transcription": transcription}
 class UpdateFirstnameSchema(Schema):
     userID: int
     firstname: str
