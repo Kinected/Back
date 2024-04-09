@@ -14,6 +14,10 @@ from asgiref.sync import sync_to_async
 from dotenv import load_dotenv
 from ninja import NinjaAPI, Schema
 from openai import OpenAI
+from fastapi import File, HTTPException
+from fastapi.responses import FileResponse
+import gzip
+import shutil
 
 from .models import Face, Mauria_Credentials, Mauria_Plannings, Spotify_Credentials, UserProfile
 
@@ -198,6 +202,15 @@ def get_response(question):
 
     return response
 
+def get_audio_transcription(response):
+    response = client.audio.speech.create(
+    model="tts-1",
+    voice="nova", # other voices: 'echo', 'fable', 'onyx', 'nova', 'shimmer'
+    input=response
+)
+    audio_transcription = response.stream_to_file('speech.mp3')
+    
+    return FileResponse('speech.mp3', media_type='audio/mpeg')
 
 @api.post("/audio/transcription")
 def audio(request):
@@ -211,9 +224,30 @@ def audio(request):
     audio_file = request.FILES['audio']
     question = get_trancription(audio_file)
     response = get_response(question)
+    # audio_transcription = get_audio_transcription(response)
+    print("traitement fichier audio")
+    get_audio_transcription(response)
+        
     return {"question": question, "response": response}
 
+@api.get("/audio/transcription")
+def audio_transcription():
+    print("audio transcription")
+    print("compression fichier audio")
 
+    # Compresser le fichier
+    with open('speech.mp3', 'rb') as f_in, gzip.open('speech.mp3.gz', 'wb') as f_out:
+        shutil.copyfileobj(f_in, f_out)
+
+    # Lire le fichier compressé et le convertir en Base64
+    with open('speech.mp3.gz', 'rb') as f:
+        data = f.read()
+        base64_data = base64.b64encode(data).decode('utf-8')
+    
+    # return FileResponse('speech.mp3', media_type='audio/mpeg')
+    return {"audio": base64_data}
+    
+    
 class UpdateFirstnameSchema(Schema):
     userID: int
     firstname: str

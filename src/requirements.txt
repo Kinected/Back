@@ -8,3 +8,4 @@ face_recognition
 websockets
 channels-redis
 openai
+fastapi

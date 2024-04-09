@@ -172,3 +172,7 @@ cython_debug/
 .idea/
 
 src/audio.mp3
+src/audio.mp3
+src/speech.mp3
+src/speech.mp3.gz
+src/audio.mp3
