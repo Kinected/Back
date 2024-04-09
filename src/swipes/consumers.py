@@ -16,7 +16,6 @@ class SwipeConsumer(WebsocketConsumer):
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        print(text_data_json)
         # Send a message to all connections in the group
         async_to_sync(self.channel_layer.group_send)(
             "swipes",

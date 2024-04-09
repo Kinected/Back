@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os
+import subprocess
 import sys
 
 
 def main():
     """Run administrative tasks."""
+    subprocess.Popen(['docker', 'compose', 'up', '-d', "--build"])
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kinected.settings')
     try:
         from django.core.management import execute_from_command_line
