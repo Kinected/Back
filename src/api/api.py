@@ -3,7 +3,6 @@ import json
 import os
 from base64 import b64decode
 from io import BytesIO
-
 import face_recognition
 import httpx
 import numpy as np
@@ -14,8 +13,10 @@ from asgiref.sync import sync_to_async
 from dotenv import load_dotenv
 from ninja import NinjaAPI, Schema
 from openai import OpenAI
+from fastapi import APIRouter
+router = APIRouter()
 
-from .models import Face, Mauria_Credentials, Mauria_Plannings, Spotify_Credentials, UserProfile
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus
 
 api = NinjaAPI()
 websocket = None
@@ -226,6 +227,97 @@ def put_firstname(request, payload: UpdateFirstnameSchema):
     user.save()
     return {"success": True}
 
+
+def get_borne_data(borne_id):
+    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/vlille-realtime/records?limit=20&refine=libelle%3A%22"+str(borne_id)+"%22"
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(response.status_code)
+        return None
+
+
+@api.get("/ilevia/borne")
+def get_borne_info(request, userID: int):
+    user = UserProfile.objects.get(id = int(userID))
+    ilevia = Ilevia_Vlille.objects.filter(user=user)
+    ilevia_bornes_id = [borne.borne_id for borne in ilevia]
+
+    print(ilevia_bornes_id)
+
+    data = []
+    for id in ilevia_bornes_id :
+        borne_data = get_borne_data(id)
+        print(borne_data)
+        if borne_data:
+            data.append({
+                "id" : id,
+                "name" : borne_data['results'][0]['nom'],
+                "nbPlacesDispo": borne_data['results'][0]['nbplacesdispo'],
+                "nbVelosDispo": borne_data['results'][0]['nbvelosdispo']
+            })
+
+    return data
+    
+    
+
+def get_arret_data(station_name, line):
+    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/ilevia-prochainspassages/records?limit=20&refine=codeligne%3A%22"+str(line)+"%22&refine=nomstation%3A%22"+str(station_name)+"%22"
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(response.status_code)
+        return None
+
+@api.get("/ilevia/arret")
+def get_arret_info(request, userID: int):
+    user = UserProfile.objects.get(id=int(userID))
+    ilevia = Ilevia_Bus.objects.filter(user=user)
+
+    data = []
+    for index in ilevia :
+        arret_data = get_arret_data(index.arret_id, "L5")
+        print(arret_data)
+        if arret_data :
+            data.append(arret_data)
+
+    return data
+
+
+
+import requests
+
+@api.get("/ilevia/bornes")
+def get_vlille_stations():
+    url = '/api/explore/v2.1/catalog/datasets/vlille-realtime/records?limit=20'
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+
+        vlille_data = []
+        for record in data['records']:
+            fields = record['fields']
+            station_name = fields.get('nom')
+            station_id = fields.get('libelle')
+            city = fields.get('commune')
+
+            vlille_data.append({
+                'station_name': station_name,
+                'station_id': station_id,
+                'city': city
+            })
+            
+        return vlille_data
+    else:
+        print(response.status_code)
+        return None
+
+    
 
 ################################################################################################
 ##########################################Debug routes##########################################
