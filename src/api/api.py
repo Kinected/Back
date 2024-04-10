@@ -231,7 +231,7 @@ def audio(request):
     return {"question": question, "response": response}
 
 @api.get("/audio/transcription")
-def audio_transcription():
+def audio_transcription(request):
     print("audio transcription")
     print("compression fichier audio")
 
