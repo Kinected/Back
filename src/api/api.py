@@ -1,26 +1,28 @@
-from ninja import NinjaAPI, Schema
-from PIL import Image
-import requests
 import base64
-import os
-from dotenv import load_dotenv
-from asgiref.sync import sync_to_async
-import httpx
 import json
+import os
 from base64 import b64decode
-import face_recognition
-import websockets
 from io import BytesIO
-from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus
+import face_recognition
+import httpx
 import numpy as np
+import requests
+import websockets
+from PIL import Image
+from asgiref.sync import sync_to_async
+from dotenv import load_dotenv
+from ninja import NinjaAPI, Schema
 from openai import OpenAI
 from fastapi import APIRouter
 router = APIRouter()
 
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus
 
 api = NinjaAPI()
 websocket = None
 load_dotenv()
+
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 
 def get_spotify_access_token(refresh_token):
@@ -48,7 +50,6 @@ def spotify(request, userID: int):
     return access_token
 
 
-
 async def get_mauria_courses(username, password):
     endpoint = "https://mauriaapi.fly.dev/planning?start=2024-04-02"
     data = {
@@ -57,9 +58,10 @@ async def get_mauria_courses(username, password):
     }
 
     async with httpx.AsyncClient() as client:
-        r = await client.post(endpoint, data=json.dumps(data), headers={'Content-Type': 'application/json'}, timeout=30.0)
+        r = await client.post(endpoint, data=json.dumps(data), headers={'Content-Type': 'application/json'},
+                              timeout=30.0)
 
-    return r.json()
+        return r.json()
 
 
 @api.get("/mauria/update")
@@ -68,6 +70,8 @@ async def update_mauria(request, userID: int):
     mauria = await sync_to_async(Mauria_Credentials.objects.get)(user=user)
     planning = await get_mauria_courses(mauria.email, mauria.mdp)
 
+    planning = [] if planning == {} else planning
+
     # Update the user's planning in the database
     user_planning, created = await sync_to_async(Mauria_Plannings.objects.get_or_create)(user=user)
     await sync_to_async(user_planning.set_planning)(planning)
@@ -75,13 +79,14 @@ async def update_mauria(request, userID: int):
 
     return planning
 
+
 @api.get("/mauria")
 async def get_mauria(request, userID: int):
-    try :
+    try:
         user = await sync_to_async(UserProfile.objects.get)(id=int(userID))
         user_planning = await sync_to_async(Mauria_Plannings.objects.get)(user=user)
         return user_planning.get_planning()
-    except :
+    except:
         return []
 
 
@@ -125,11 +130,13 @@ async def post_user(request, img: ImageSchema):
     first_user = await sync_to_async(UserProfile.objects.get)(id=1)
 
     first_user_spotify = await sync_to_async(Spotify_Credentials.objects.get)(user=first_user)
-    user_spotify = await sync_to_async(Spotify_Credentials.objects.create)(user=user, refresh_token=first_user_spotify.refresh_token)
+    user_spotify = await sync_to_async(Spotify_Credentials.objects.create)(user=user,
+                                                                           refresh_token=first_user_spotify.refresh_token)
     await sync_to_async(user_spotify.save)()
 
     first_user_mauria = await sync_to_async(Mauria_Credentials.objects.get)(user=first_user)
-    user_mauria = await sync_to_async(Mauria_Credentials.objects.create)(user=user, email=first_user_mauria.email, mdp=first_user_mauria.mdp)
+    user_mauria = await sync_to_async(Mauria_Credentials.objects.create)(user=user, email=first_user_mauria.email,
+                                                                         mdp=first_user_mauria.mdp)
     await sync_to_async(user_mauria.save)()
     ##########
 
@@ -160,12 +167,7 @@ def get_users_face(request):
     return data
 
 
-
-@api.post("/audio/firstname")
-def audio (request, userID : str):
-    audio_file = request.FILES['audio']
-    print("audio :", audio_file)
-
+def get_trancription(audio_file):
     # Save the file to disk
     with open('audio.mp3', 'wb+') as destination:
         for chunk in audio_file.chunks():
@@ -174,32 +176,49 @@ def audio (request, userID : str):
     # Now read the file
     with open('audio.mp3', 'rb') as f:
         audio_data = f.read()
-        print("audio :", audio_data)
-    
-            
-        ######################### WHISPER #########################
-        ###########################################################
-        client = OpenAI()
-
-        audio_file= open("audio.mp3", "rb")
+        audio_file = open("audio.mp3", "rb")
         transcription = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=audio_file,
+            model="whisper-1",
+            file=audio_file,
         )
-        nom = transcription.text
+        return transcription.text
 
-        # user = UserProfile.objects.get(id=int(userID))
-        # user.firstname = nom
-        # user.save()
-        
-        print(nom)
-        ######################### WHISPER #########################
-        ###########################################################
 
-    return {"firstname": nom}
+def get_response(question):
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": question,
+            }
+        ],
+        model="gpt-3.5-turbo",
+    )
+
+    response = chat_completion.choices[0].message.content
+
+    return response
+
+
+@api.post("/audio/transcription")
+def audio(request):
+    audio_file = request.FILES['audio']
+    transcription = get_trancription(audio_file)
+    return {"transcription": transcription}
+
+
+@api.post("/audio/chatvoc")
+def audio(request):
+    audio_file = request.FILES['audio']
+    question = get_trancription(audio_file)
+    response = get_response(question)
+    return {"question": question, "response": response}
+
+
 class UpdateFirstnameSchema(Schema):
     userID: int
     firstname: str
+
 
 @api.put("/user/firstname")
 def put_firstname(request, payload: UpdateFirstnameSchema):
@@ -299,6 +318,7 @@ def get_vlille_stations():
         return None
 
     
+
 ################################################################################################
 ##########################################Debug routes##########################################
 ################################################################################################

@@ -1,7 +1,8 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
 import json
+
+from django.contrib.auth.models import User
+from django.db import models
+
 
 class Face(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
@@ -24,12 +25,11 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.id} {self.firstname} {self.lastname}"
-    
 
 
 class Spotify_Credentials(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
-    refresh_token = models.CharField(max_length=255)  
+    refresh_token = models.CharField(max_length=255)
 
     def __str__(self):
         return f"Spotify Credentials for {self.user.firstname} {self.user.lastname}"
@@ -39,7 +39,7 @@ class Mauria_Credentials(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
     email = models.EmailField(max_length=50, unique=True)
     mdp = models.CharField(max_length=128)
-    
+
     def __str__(self):
         return f"Mauria Credentials for {self.email}"
 
@@ -49,7 +49,8 @@ class Mauria_Plannings(models.Model):
     planning = models.TextField(default='[]')
 
     def set_planning(self, array):
-        self.planning = json.dumps(array)
+        if array != {}:
+            self.planning = json.dumps(array)
 
     def get_planning(self):
         return json.loads(self.planning)
