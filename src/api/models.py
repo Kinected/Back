@@ -58,6 +58,11 @@ class Mauria_Plannings(models.Model):
         return f"Plannings for {self.user.id} {self.user.firstname} {self.user.lastname}"
 
 
-class Ilevia_Credentials(models.Model):
+class Ilevia_Bus(models.Model):
+    user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
+    arret_id = models.CharField(max_length=50)
+    line = models.CharField(max_length=50)
+
+class Ilevia_Vlille(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
     borne_id = models.CharField(max_length=4)
