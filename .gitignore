@@ -171,5 +171,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
+
+src/audio.mp3
+src/speech.mp3
+src/speech.mp3.gz
 src/audio.mp3
 src/awadji
