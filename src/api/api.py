@@ -1,28 +1,28 @@
 import base64
+import gzip
 import json
 import os
+import shutil
 from base64 import b64decode
+from collections import defaultdict
 from io import BytesIO
+
 import face_recognition
 import httpx
 import numpy as np
-import requests
 import websockets
 from PIL import Image
 from asgiref.sync import sync_to_async
 from dotenv import load_dotenv
+from fastapi import APIRouter
+from fastapi.responses import FileResponse
 from ninja import NinjaAPI, Schema
 from openai import OpenAI
-from fastapi import File, HTTPException
-from fastapi.responses import FileResponse
-import gzip
-import shutil
-from fastapi import APIRouter
-from collections import defaultdict
 
 router = APIRouter()
 
-from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, \
+    Ilevia_Bus
 
 api = NinjaAPI()
 websocket = None
@@ -122,11 +122,13 @@ async def post_user(request, img: ImageSchema):
     image_pil = Image.open(BytesIO(image_data))
     image_np = np.array(image_pil)
 
+    image_pil.save("images/original.jpg")
+
     face_locations = face_recognition.face_locations(image_np)
     if face_locations and len(face_locations[0]) == 4:
         top, right, bottom, left = face_locations[0]
 
-        top = min(image_np.shape[0], round(top - 25 ))
+        top = min(image_np.shape[0], round(top - 25))
         right = min(image_np.shape[1], right + 25)
         bottom = min(image_np.shape[0], bottom + 25)
         left = min(image_np.shape[1], round(left - 25))
@@ -141,8 +143,12 @@ async def post_user(request, img: ImageSchema):
     print(face_encodings)
     face_encoding = face_encodings[0]
 
+    # Save the image
+
     user = await sync_to_async(UserProfile.objects.create)()
     await sync_to_async(user.save)()
+
+    image_pil.save(f"images/{user.id}.jpg")
 
     face = await sync_to_async(Face.objects.create)(user=user)
     await sync_to_async(face.set_values)(face_encoding.tolist())
@@ -213,15 +219,17 @@ def get_response(question):
 
     return response
 
+
 def get_audio_transcription(response):
     response = client.audio.speech.create(
-    model="tts-1",
-    voice="nova", # other voices: 'echo', 'fable', 'onyx', 'nova', 'shimmer'
-    input=response
-)
+        model="tts-1",
+        voice="nova",  # other voices: 'echo', 'fable', 'onyx', 'nova', 'shimmer'
+        input=response
+    )
     audio_transcription = response.stream_to_file('speech.mp3')
-    
+
     return FileResponse('speech.mp3', media_type='audio/mpeg')
+
 
 @api.post("/audio/transcription")
 def audio(request):
@@ -238,8 +246,9 @@ def audio(request):
     # audio_transcription = get_audio_transcription(response)
     print("traitement fichier audio")
     get_audio_transcription(response)
-        
+
     return {"question": question, "response": response}
+
 
 @api.get("/audio/transcription")
 def audio_transcription(request):
@@ -254,11 +263,11 @@ def audio_transcription(request):
     with open('speech.mp3.gz', 'rb') as f:
         data = f.read()
         base64_data = base64.b64encode(data).decode('utf-8')
-    
+
     # return FileResponse('speech.mp3', media_type='audio/mpeg')
     return {"audio": base64_data}
-    
-    
+
+
 class UpdateFirstnameSchema(Schema):
     userID: int
     firstname: str
@@ -273,7 +282,8 @@ def put_firstname(request, payload: UpdateFirstnameSchema):
 
 
 def get_borne_data(borne_id):
-    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/vlille-realtime/records?limit=20&refine=libelle%3A%22"+str(borne_id)+"%22"
+    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/vlille-realtime/records?limit=20&refine=libelle%3A%22" + str(
+        borne_id) + "%22"
 
     response = requests.get(url)
     if response.status_code == 200:
@@ -285,36 +295,36 @@ def get_borne_data(borne_id):
 
 @api.get("/ilevia/borne")
 def get_borne_info(request, userID: int):
-    user = UserProfile.objects.get(id = int(userID))
+    user = UserProfile.objects.get(id=int(userID))
     ilevia = Ilevia_Vlille.objects.filter(user=user)
     ilevia_bornes_id = [borne.borne_id for borne in ilevia]
 
     print(ilevia_bornes_id)
 
     data = []
-    for id in ilevia_bornes_id :
+    for id in ilevia_bornes_id:
         borne_data = get_borne_data(id)
         print(borne_data)
         if borne_data:
             data.append({
-                "id" : id,
-                "name" : borne_data['results'][0]['nom'],
+                "id": id,
+                "name": borne_data['results'][0]['nom'],
                 "nbPlacesDispo": borne_data['results'][0]['nbplacesdispo'],
                 "nbVelosDispo": borne_data['results'][0]['nbvelosdispo']
             })
 
     return data
-    
-    
+
 
 def get_arret_data(station_name, lines):
-    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/ilevia-prochainspassages/records?limit=20&refine=nomstation%3A%22"+str(station_name)+"%22"
+    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/ilevia-prochainspassages/records?limit=20&refine=nomstation%3A%22" + str(
+        station_name) + "%22"
 
     response = requests.get(url)
     if response.status_code == 200:
-        data= response.json()
+        data = response.json()
 
-        #filter data with line
+        # filter data with line
         data = [record for record in data['results'] if record['codeligne'] in lines]
         organized_data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
@@ -322,12 +332,11 @@ def get_arret_data(station_name, lines):
         for item in data:
             organized_data[item['nomstation']][item['codeligne']][item['sensligne']].append(item)
 
-
-
         return organized_data
     else:
         print(response.status_code)
         return None
+
 
 @api.get("/ilevia/arret")
 def get_arret_info(request, userID: int):
@@ -338,14 +347,13 @@ def get_arret_info(request, userID: int):
 
     # get all the line of each arret knowing that ilevia contain multiple time the same arret with different line
 
-
     data = []
-    for index in ilevia :
+    for index in ilevia:
         bus_stops_and_lines[index.arret_id].add(index.line)
 
-    for arret,lines in bus_stops_and_lines.items():
+    for arret, lines in bus_stops_and_lines.items():
         arret_data = get_arret_data(arret, lines)
-        if arret_data :
+        if arret_data:
             data.append(arret_data)
         # else :
         #     data.append({
@@ -360,8 +368,8 @@ def get_arret_info(request, userID: int):
     return data
 
 
-
 import requests
+
 
 @api.get("/ilevia/bornes")
 def get_vlille_stations():
@@ -383,13 +391,12 @@ def get_vlille_stations():
                 'station_id': station_id,
                 'city': city
             })
-            
+
         return vlille_data
     else:
         print(response.status_code)
         return None
 
-    
 
 ################################################################################################
 ##########################################Debug routes##########################################
