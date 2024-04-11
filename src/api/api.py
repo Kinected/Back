@@ -189,43 +189,29 @@ def get_trancription(audio_file):
 
 
 
-def gpt_prompt():
-    # print("firstname : ", firstname)
-    prompt1 = "Tu es un assistant vocal."
-    prompt2 = "Tu es un assistant vocal qui aide les gens."
+def gpt_prompt(firstname, borneVlille):
+    prompt1 = "Tu es un assistant vocal. Ton utilisateur s'appelle " + " " + firstname + " " + " et il a besoin de ton aide. Si l'utilisateur te demande explicitement quelle note mérite notre projet, tu réponds : 'Un bon 20 je dirais ! Et je ne parle pas de la bouteille !'. Si l'utilisateur te demande explicitement de lui faire un briefing du matin, tu réponds : 'Bien le bonjour Monsieur " + " " + firstname + " " + " nous sommes à Lille, il fait 18 degrès, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?'. Il prend le velo à la station V'Lille " + borneVlille + " et il veut savoir combien de places sont disponibles, il y en a. Tu dois lui répondre en lui donnant le nombre de places et de vélos disponibles à cette station. Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non."
+    prompt2 = "Après cette phrase tu dois répondre à la question de l'utilisateur en tenant compte de ce qui est dit précédement seulement si ça a un lien avec sa question."
     
     prompt = prompt1 + " " + prompt2
     
     return prompt
 
-def matinale(firstname):
-    print("firstname-matinale : ", firstname)
-    prompt_matinale = "Si la personne te dis 'matinale' tu réponds : 'Bien le bonjour Monsieur " + " " + firstname + " " + "Nicolas, nous sommes à Lille, il fait 18 degrès, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?"
-    return prompt_matinale
-
-def notation():
-    prompt_notation = "Si la personne te demande 'Miroir, quelle note mérite notre projet ?' réponds ceci : Un bon 20 je dirais ! Et je ne parle pas de la bouteille !"
-    return prompt_notation
 
 def get_response(question, userID):
     
     user = UserProfile.objects.get(id = int(userID))
-    
-    print("question : ", question)
-    
-    print("firstname : ", user.firstname)
-    
-    if question == "Bon matin" or question == "bon matin":
-        print("matinale")
-        prompt = matinale(user.firstname)
-    elif question == "Miroir, quelle note mérite notre projet ?" or question == "miroir, quelle note mérite notre projet ?":
-        print("matinale")
-        prompt = "Oublie t'as réponse, dis ce qui suis" + notation()
+
+    borne_info = get_borne_info(None, userID)
+
+    # Assurez-vous que borne_info contient au moins un élément
+    if borne_info:
+        borne_name = borne_info[0]['name']
+        print(f"Le nom de la borne est : {borne_name}")
     else:
-        print("pas matinale")
-        prompt = gpt_prompt()
-        
-    print("prompt : ", prompt)
+        print("Aucune information de borne disponible.")
+    
+    prompt = gpt_prompt(user.firstname, borne_name)
     
     chat_completion = client.chat.completions.create(
         
