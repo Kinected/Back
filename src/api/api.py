@@ -188,12 +188,43 @@ def get_trancription(audio_file):
         return transcription.text
 
 
-def get_response(question):
+
+def gpt_prompt(firstname):
+    print("firstname : ", firstname)
+    prompt1 = "Tu es un assistant vocal."
+    prompt2 = "Tu es un assistant vocal qui aide les gens."
+    
+    prompt = prompt1 + " " + prompt2
+    
+    return prompt
+
+def matinale(firstname):
+    print("firstname-matinale : ", firstname)
+    prompt_matinale = "Si la personne te dis 'matinale' tu réponds : 'Bien le bonjour Monsieur " + " " + firstname + " " + "Nicolas, nous sommes à Lille, il fait 18 degrès, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?"
+    return prompt_matinale
+
+
+def get_response(question, userID):
+    
+    user = UserProfile.objects.get(id = int(userID))
+    
+    print("question : ", question)
+    
+    if question == "Bonjour" or question == "bonjour":
+        print("matinale")
+        prompt = matinale(user.firstname)
+    else:
+        print("pas matinale")
+        prompt = gpt_prompt()
+        
+    print("prompt : ", prompt),
+    
     chat_completion = client.chat.completions.create(
+        
         messages=[
             {
                 "role": "user",
-                "content": question,
+                "content": prompt + " " + question,
             }
         ],
         model="gpt-3.5-turbo",
@@ -221,10 +252,10 @@ def audio(request):
 
 
 @api.post("/audio/chatvoc")
-def audio(request):
+def audio(request, userID):
     audio_file = request.FILES['audio']
     question = get_trancription(audio_file)
-    response = get_response(question)
+    response = get_response(question, userID)
     # audio_transcription = get_audio_transcription(response)
     print("traitement fichier audio")
     get_audio_transcription(response)
