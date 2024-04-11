@@ -1,7 +1,11 @@
 import json
+import os
 
 from django.contrib.auth.models import User
 from django.db import models
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Face(models.Model):
@@ -29,7 +33,7 @@ class UserProfile(models.Model):
 
 class Spotify_Credentials(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
-    refresh_token = models.CharField(max_length=255)
+    refresh_token = models.CharField(max_length=255, default=os.getenv('SPOTIFY_REFRESH_TOKEN'))
 
     def __str__(self):
         return f"Spotify Credentials for {self.user.firstname} {self.user.lastname}"
@@ -37,8 +41,8 @@ class Spotify_Credentials(models.Model):
 
 class Mauria_Credentials(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
-    email = models.EmailField(max_length=50, unique=True)
-    mdp = models.CharField(max_length=128)
+    email = models.EmailField(max_length=50, default=os.getenv('MAURIA_EMAIL'))
+    mdp = models.CharField(max_length=128, default=os.getenv('MAURIA_MDP'))
 
     def __str__(self):
         return f"Mauria Credentials for {self.email}"
