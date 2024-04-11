@@ -121,7 +121,25 @@ async def post_user(request, img: ImageSchema):
     image_data = b64decode(img.image.split(',')[1])
     image_pil = Image.open(BytesIO(image_data))
     image_np = np.array(image_pil)
-    face_encoding = face_recognition.face_encodings(image_np)[0]
+
+    face_locations = face_recognition.face_locations(image_np)
+    if face_locations and len(face_locations[0]) == 4:
+        top, right, bottom, left = face_locations[0]
+
+        top = min(image_np.shape[0], round(top - 25 ))
+        right = min(image_np.shape[1], right + 25)
+        bottom = min(image_np.shape[0], bottom + 25)
+        left = min(image_np.shape[1], round(left - 25))
+
+        print(top, right, bottom, left)
+        image_np = image_np[top:bottom, left:right]
+        image_pil = Image.fromarray(image_np)
+        image_pil.save("images/face.jpg")
+        image_np = np.array(image_pil)
+
+    face_encodings = face_recognition.face_encodings(image_np)
+    print(face_encodings)
+    face_encoding = face_encodings[0]
 
     user = await sync_to_async(UserProfile.objects.create)()
     await sync_to_async(user.save)()
