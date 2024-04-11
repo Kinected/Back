@@ -189,9 +189,10 @@ def get_trancription(audio_file):
 
 
 
-def gpt_prompt(firstname, borneVlille, places_dispo):
+def gpt_prompt(firstname, borneVlille, places_dispo, velo_dispo):
     places_dispo_str = str(places_dispo)
-    prompt1 = "Tu es un assistant vocal. Ton utilisateur s'appelle " + " " + firstname + " " + " et il a besoin de ton aide. Si l'utilisateur te demande explicitement quelle note mérite notre projet, tu réponds : 'Un bon 20 je dirais ! Et je ne parle pas de la bouteille !'. Si l'utilisateur te demande explicitement de lui faire un briefing du matin, tu réponds : 'Bien le bonjour Monsieur " + " " + firstname + " " + " nous sommes à Lille, il fait 18 degrès, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?'. Il prend le velo à la station V'Lille " + borneVlille + " et il veut savoir combien de places sont disponibles, il y en a " + places_dispo_str + ". Tu dois lui répondre en lui donnant le nombre de places et de vélos disponibles à cette station. Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non."
+    velo_dispo_str = str(velo_dispo)
+    prompt1 = "Tu es un assistant vocal. Ton utilisateur s'appelle " + " " + firstname + " " + " et il a besoin de ton aide. Si l'utilisateur te demande explicitement quelle note mérite notre projet, tu réponds : 'Un bon 20 je dirais ! Et je ne parle pas de la bouteille !'. Si l'utilisateur te demande explicitement de lui faire un briefing du matin, tu réponds : 'Bien le bonjour Monsieur " + " " + firstname + " " + " nous sommes à Lille, il fait 18 degrès, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?'. Il prend le velo à la station V'Lille " + borneVlille + " et il veut savoir combien de places sont disponibles, il y en a " + places_dispo_str + " et il y a " + velo_dispo_str + " velo disponibles  . Tu dois lui répondre en lui donnant le nombre de places et de vélos disponibles à cette station. Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non."
     prompt2 = "Après cette phrase tu dois répondre à la question de l'utilisateur en tenant compte de ce qui est dit précédement seulement si ça a un lien avec sa question."
     
     prompt = prompt1 + " " + prompt2
@@ -209,11 +210,12 @@ def get_response(question, userID):
     if borne_info:
         borne_name = borne_info[0]['name']
         places_dispo = borne_info[0]['nbPlacesDispo']
-        print(f"Le nombre de places dispo est : {places_dispo}")
+        velo_dispo = borne_info[0]['nbVelosDispo']
+        print(f"Le nombre de places dispo est : {velo_dispo}")
     else:
         print("Aucune information de borne disponible.")
     
-    prompt = gpt_prompt(user.firstname, borne_name, places_dispo)
+    prompt = gpt_prompt(user.firstname, borne_name, places_dispo, velo_dispo)
     
     chat_completion = client.chat.completions.create(
         
