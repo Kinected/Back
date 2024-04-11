@@ -7,7 +7,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    subprocess.Popen(['docker', 'compose', 'up', '-d', "--build"])
+    # subprocess.Popen(['docker', 'compose', 'up', '-d', "--build"])
 
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kinected.settings')
     try:

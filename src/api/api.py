@@ -189,8 +189,8 @@ def get_trancription(audio_file):
 
 
 
-def gpt_prompt(firstname):
-    print("firstname : ", firstname)
+def gpt_prompt():
+    # print("firstname : ", firstname)
     prompt1 = "Tu es un assistant vocal."
     prompt2 = "Tu es un assistant vocal qui aide les gens."
     
@@ -203,6 +203,9 @@ def matinale(firstname):
     prompt_matinale = "Si la personne te dis 'matinale' tu réponds : 'Bien le bonjour Monsieur " + " " + firstname + " " + "Nicolas, nous sommes à Lille, il fait 18 degrès, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?"
     return prompt_matinale
 
+def notation():
+    prompt_notation = "Si la personne te demande 'Miroir, quelle note mérite notre projet ?' réponds ceci : Un bon 20 je dirais ! Et je ne parle pas de la bouteille !"
+    return prompt_notation
 
 def get_response(question, userID):
     
@@ -210,14 +213,19 @@ def get_response(question, userID):
     
     print("question : ", question)
     
-    if question == "Bonjour" or question == "bonjour":
+    print("firstname : ", user.firstname)
+    
+    if question == "Bon matin" or question == "bon matin":
         print("matinale")
         prompt = matinale(user.firstname)
+    elif question == "Miroir, quelle note mérite notre projet ?" or question == "miroir, quelle note mérite notre projet ?":
+        print("matinale")
+        prompt = "Oublie t'as réponse, dis ce qui suis" + notation()
     else:
         print("pas matinale")
         prompt = gpt_prompt()
         
-    print("prompt : ", prompt),
+    print("prompt : ", prompt)
     
     chat_completion = client.chat.completions.create(
         
