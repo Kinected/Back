@@ -159,18 +159,49 @@ async def post_user(request, img: ImageSchema):
     return {"success": True}
 
 
+@api.get("/user/debug")
+def get_user_debug(request):
+
+    user = UserProfile.objects.get_or_create(firstname="Debug")[0]
+    user.save()
+
+    spotify = Spotify_Credentials.objects.get_or_create(user=user)[0]
+    spotify.save()
+
+    mauria = Mauria_Credentials.objects.get_or_create(user=user)[0]
+    mauria.save()
+
+    ilevia_bus = Ilevia_Bus.objects.get_or_create(user=user)[0]
+    ilevia_bus.save()
+
+    ilevia_vlille = Ilevia_Vlille.objects.get_or_create(user=user)[0]
+    ilevia_vlille.save()
+
+    face = Face.objects.get_or_create(user=user)[0]
+    img = face_recognition.load_image_file("images/obama.jpg")
+    face.set_values(face_recognition.face_encodings(img)[0].tolist())
+    face.save()
+
+    return {"userID" : user.id}
+
+
+
 @api.get("/user")
 def get_user(request, userID: int):
     print(userID)
     user = UserProfile.objects.get(id=int(userID))
     gotSpotify = Spotify_Credentials.objects.filter(user=user).exists()
     gotMauria = Mauria_Credentials.objects.filter(user=user).exists()
+    gotIleviaBus = Ilevia_Bus.objects.filter(user=user).exists()
+    gotIleviaVlille = Ilevia_Vlille.objects.filter(user=user).exists()
     return {
         "id": user.id,
         "firstname": user.firstname,
         "lastname": user.lastname,
         "gotSpotify": gotSpotify,
-        "gotMauria": gotMauria
+        "gotMauria": gotMauria,
+        "gotIleviaBus": gotIleviaBus,
+        "gotIleviaVlille": gotIleviaVlille
     }
 
 
@@ -361,7 +392,6 @@ def get_arret_info(request, userID: int):
 
 
 
-import requests
 
 @api.get("/ilevia/bornes")
 def get_vlille_stations():
