@@ -18,6 +18,8 @@ from fastapi.responses import FileResponse
 import gzip
 import shutil
 from fastapi import APIRouter
+from collections import defaultdict
+
 router = APIRouter()
 
 from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus
@@ -297,12 +299,24 @@ def get_borne_info(request, userID: int):
     
     
 
-def get_arret_data(station_name, line):
-    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/ilevia-prochainspassages/records?limit=20&refine=codeligne%3A%22"+str(line)+"%22&refine=nomstation%3A%22"+str(station_name)+"%22"
+def get_arret_data(station_name, lines):
+    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/ilevia-prochainspassages/records?limit=20&refine=nomstation%3A%22"+str(station_name)+"%22"
 
     response = requests.get(url)
     if response.status_code == 200:
-        return response.json()
+        data= response.json()
+
+        #filter data with line
+        data = [record for record in data['results'] if record['codeligne'] in lines]
+        organized_data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+
+        # Parcourir les données et ajouter chaque dictionnaire à la liste correspondante
+        for item in data:
+            organized_data[item['nomstation']][item['codeligne']][item['sensligne']].append(item)
+
+
+
+        return organized_data
     else:
         print(response.status_code)
         return None
@@ -312,13 +326,29 @@ def get_arret_info(request, userID: int):
     user = UserProfile.objects.get(id=int(userID))
     ilevia = Ilevia_Bus.objects.filter(user=user)
 
+    bus_stops_and_lines = defaultdict(set)
+
+    # get all the line of each arret knowing that ilevia contain multiple time the same arret with different line
+
+
     data = []
     for index in ilevia :
-        arret_data = get_arret_data(index.arret_id, "L5")
-        print(arret_data)
+        bus_stops_and_lines[index.arret_id].add(index.line)
+
+    for arret,lines in bus_stops_and_lines.items():
+        arret_data = get_arret_data(arret, lines)
         if arret_data :
             data.append(arret_data)
-
+        # else :
+        #     data.append({
+        #         "results" : [
+        #             {
+        #                 "codeLigne": index.line,
+        #                 "nomStation": index.arret_id,
+        #             }
+        #         ]
+        #     })
+    print(bus_stops_and_lines)
     return data
 
 
