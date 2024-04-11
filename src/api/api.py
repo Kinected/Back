@@ -124,27 +124,17 @@ async def post_user(request, img: ImageSchema):
     face_encoding = face_recognition.face_encodings(image_np)[0]
 
     user = await sync_to_async(UserProfile.objects.create)()
-    user.firstname = "Utilisateur" + str(user.id)
-    user.lastname = ""
     await sync_to_async(user.save)()
 
     face = await sync_to_async(Face.objects.create)(user=user)
     await sync_to_async(face.set_values)(face_encoding.tolist())
     await sync_to_async(face.save)()
 
-    # A supprimer sur du long terme (refresh_token de sam car il est premium)
-    first_user = await sync_to_async(UserProfile.objects.get)(id=1)
-
-    first_user_spotify = await sync_to_async(Spotify_Credentials.objects.get)(user=first_user)
-    user_spotify = await sync_to_async(Spotify_Credentials.objects.create)(user=user,
-                                                                           refresh_token=first_user_spotify.refresh_token)
+    user_spotify = await sync_to_async(Spotify_Credentials.objects.create)(user=user)
     await sync_to_async(user_spotify.save)()
 
-    first_user_mauria = await sync_to_async(Mauria_Credentials.objects.get)(user=first_user)
-    user_mauria = await sync_to_async(Mauria_Credentials.objects.create)(user=user, email=first_user_mauria.email,
-                                                                         mdp=first_user_mauria.mdp)
+    user_mauria = await sync_to_async(Mauria_Credentials.objects.create)(user=user)
     await sync_to_async(user_mauria.save)()
-    ##########
 
     await send_websocket_create_user(user.id, face.get_values())
 
