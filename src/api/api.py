@@ -1,15 +1,14 @@
 import base64
-import gzip
 import json
 import os
 import shutil
 from base64 import b64decode
 from collections import defaultdict
 from io import BytesIO
-
 import face_recognition
 import httpx
 import numpy as np
+import requests
 import websockets
 from PIL import Image
 from asgiref.sync import sync_to_async
@@ -18,11 +17,16 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse
 from ninja import NinjaAPI, Schema
 from openai import OpenAI
+from fastapi import File, HTTPException
+from fastapi.responses import FileResponse
+import gzip
+import shutil
+from fastapi import APIRouter
+from collections import defaultdict
 
 router = APIRouter()
 
-from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, \
-    Ilevia_Bus
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus
 
 api = NinjaAPI()
 websocket = None
@@ -143,8 +147,6 @@ async def post_user(request, img: ImageSchema):
     print(face_encodings)
     face_encoding = face_encodings[0]
 
-    # Save the image
-
     user = await sync_to_async(UserProfile.objects.create)()
     await sync_to_async(user.save)()
 
@@ -165,18 +167,49 @@ async def post_user(request, img: ImageSchema):
     return {"success": True}
 
 
+@api.get("/user/debug")
+def get_user_debug(request):
+
+    user = UserProfile.objects.get_or_create(firstname="Debug")[0]
+    user.save()
+
+    spotify = Spotify_Credentials.objects.get_or_create(user=user)[0]
+    spotify.save()
+
+    mauria = Mauria_Credentials.objects.get_or_create(user=user)[0]
+    mauria.save()
+
+    ilevia_bus = Ilevia_Bus.objects.get_or_create(user=user)[0]
+    ilevia_bus.save()
+
+    ilevia_vlille = Ilevia_Vlille.objects.get_or_create(user=user)[0]
+    ilevia_vlille.save()
+
+    face = Face.objects.get_or_create(user=user)[0]
+    img = face_recognition.load_image_file("images/obama.jpg")
+    face.set_values(face_recognition.face_encodings(img)[0].tolist())
+    face.save()
+
+    return {"userID" : user.id}
+
+
+
 @api.get("/user")
 def get_user(request, userID: int):
     print(userID)
     user = UserProfile.objects.get(id=int(userID))
     gotSpotify = Spotify_Credentials.objects.filter(user=user).exists()
     gotMauria = Mauria_Credentials.objects.filter(user=user).exists()
+    gotIleviaBus = Ilevia_Bus.objects.filter(user=user).exists()
+    gotIleviaVlille = Ilevia_Vlille.objects.filter(user=user).exists()
     return {
         "id": user.id,
         "firstname": user.firstname,
         "lastname": user.lastname,
         "gotSpotify": gotSpotify,
-        "gotMauria": gotMauria
+        "gotMauria": gotMauria,
+        "gotIleviaBus": gotIleviaBus,
+        "gotIleviaVlille": gotIleviaVlille
     }
 
 
@@ -219,17 +252,15 @@ def get_response(question):
 
     return response
 
-
 def get_audio_transcription(response):
     response = client.audio.speech.create(
-        model="tts-1",
-        voice="nova",  # other voices: 'echo', 'fable', 'onyx', 'nova', 'shimmer'
-        input=response
+    model="tts-1",
+    voice="nova", # other voices: 'echo', 'fable', 'onyx', 'nova', 'shimmer'
+    input=response
     )
     audio_transcription = response.stream_to_file('speech.mp3')
 
     return FileResponse('speech.mp3', media_type='audio/mpeg')
-
 
 @api.post("/audio/transcription")
 def audio(request):
@@ -246,9 +277,8 @@ def audio(request):
     # audio_transcription = get_audio_transcription(response)
     print("traitement fichier audio")
     get_audio_transcription(response)
-
+        
     return {"question": question, "response": response}
-
 
 @api.get("/audio/transcription")
 def audio_transcription(request):
@@ -263,11 +293,11 @@ def audio_transcription(request):
     with open('speech.mp3.gz', 'rb') as f:
         data = f.read()
         base64_data = base64.b64encode(data).decode('utf-8')
-
+    
     # return FileResponse('speech.mp3', media_type='audio/mpeg')
     return {"audio": base64_data}
-
-
+    
+    
 class UpdateFirstnameSchema(Schema):
     userID: int
     firstname: str
@@ -314,7 +344,8 @@ def get_borne_info(request, userID: int):
             })
 
     return data
-
+    
+    
 
 def get_arret_data(station_name, lines):
     url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/ilevia-prochainspassages/records?limit=20&refine=nomstation%3A%22" + str(
@@ -336,7 +367,6 @@ def get_arret_data(station_name, lines):
     else:
         print(response.status_code)
         return None
-
 
 @api.get("/ilevia/arret")
 def get_arret_info(request, userID: int):
@@ -368,7 +398,6 @@ def get_arret_info(request, userID: int):
     return data
 
 
-import requests
 
 
 @api.get("/ilevia/bornes")
@@ -391,12 +420,13 @@ def get_vlille_stations():
                 'station_id': station_id,
                 'city': city
             })
-
+            
         return vlille_data
     else:
         print(response.status_code)
         return None
 
+    
 
 ################################################################################################
 ##########################################Debug routes##########################################
