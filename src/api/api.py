@@ -189,13 +189,16 @@ def get_trancription(audio_file):
 
 
 
-def gpt_prompt(firstname, borneVlille, places_dispo, velo_dispo):
+def gpt_prompt(firstname, borneVlille, places_dispo, velo_dispo, bus_Arret, ligne_Bus, arret_data):
     places_dispo_str = str(places_dispo)
     velo_dispo_str = str(velo_dispo)
+    print("-------------------- INFORMATIONS ILEVIA ---------------------", "Nom : ",firstname, "borne VLille : ", borneVlille,"Places VLille dispo : ", places_dispo,"Velo dispo : ", velo_dispo, "Nom arret : ", bus_Arret, "Ligne bus : ",ligne_Bus)
     prompt1 = "Tu es un assistant vocal. Ton utilisateur s'appelle " + " " + firstname + " " + " et il a besoin de ton aide. Si l'utilisateur te demande explicitement quelle note mérite notre projet, tu réponds : 'Un bon 20 je dirais ! Et je ne parle pas de la bouteille !'. Si l'utilisateur te demande explicitement de lui faire un briefing du matin, tu réponds : 'Bien le bonjour Monsieur " + " " + firstname + " " + " nous sommes à Lille, il fait 18 degrès, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?'. Il prend le velo à la station V'Lille " + borneVlille + " et il veut savoir combien de places sont disponibles, il y en a " + places_dispo_str + " et il y a " + velo_dispo_str + " velo disponibles  . Tu dois lui répondre en lui donnant le nombre de places et de vélos disponibles à cette station. Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non."
-    prompt2 = "Après cette phrase tu dois répondre à la question de l'utilisateur en tenant compte de ce qui est dit précédement seulement si ça a un lien avec sa question."
+    prompt2 = "Voici toutes les informations concernant les bus : " + str(arret_data)
+    prompt3 = "L'utilisateur veut savoir quand passe le prochain bus à l'arret " + bus_Arret + ". Tu dois lui répondre en lui donnant les horaires de passage des bus à cet arret pour la ligne."  "Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non."
+    prompt4 = "Après cette phrase tu dois répondre à la question de l'utilisateur en tenant compte de ce qui est dit précédement seulement si ça a un lien avec sa question."
     
-    prompt = prompt1 + " " + prompt2
+    prompt = prompt1 + " " + prompt2 + " " + prompt3 + " " + prompt4
     
     return prompt
 
@@ -205,8 +208,29 @@ def get_response(question, userID):
     user = UserProfile.objects.get(id = int(userID))
 
     borne_info = get_borne_info(None, userID)
+    
+    arret_info = get_arret_info(None, userID)
 
-    # Assurez-vous que borne_info contient au moins un élément
+    ligne_bus = 'L5'  # Définissez ligne_bus avant la boucle
+    arret_data = 'CORMONTAIGNE'  # Définissez arret_data avant la boucle
+
+    if arret_info and 'arret_data' in arret_info[0] and isinstance(arret_info[0]['arret_data'], dict):
+        arret_name = arret_info[0]['arret_name']
+        arret_data = arret_info[0]['arret_data']  # Mettez à jour arret_data
+        if 'results' in arret_data:
+            for bus in arret_data['results']:
+                print(bus)  # Imprimez bus pour voir à quoi il ressemble
+                if isinstance(bus, dict) and 'fields' in bus and 'codeligne' in bus['fields']:
+                    ligne_bus = bus['fields']['codeligne']
+                    print(f"Le nom de l'arrêt est : {arret_name} et la ligne de bus est : {ligne_bus}")
+                else:
+                    print("Bus data is not in the expected format.")
+        else:
+            print("Aucune information d'arrêt disponible.")
+    else:
+        print("Aucune information d'arrêt disponible.")
+    
+    
     if borne_info:
         borne_name = borne_info[0]['name']
         places_dispo = borne_info[0]['nbPlacesDispo']
@@ -215,7 +239,7 @@ def get_response(question, userID):
     else:
         print("Aucune information de borne disponible.")
     
-    prompt = gpt_prompt(user.firstname, borne_name, places_dispo, velo_dispo)
+    prompt = gpt_prompt(user.firstname, borne_name, places_dispo, velo_dispo, arret_name, ligne_bus, arret_data)
     
     chat_completion = client.chat.completions.create(
         
@@ -346,7 +370,8 @@ def get_arret_info(request, userID: int):
         arret_data = get_arret_data(index.arret_id, "L5")
         print(arret_data)
         if arret_data :
-            data.append(arret_data)
+            data.append({"arret_name" : index.arret_id,
+                "arret_data" : arret_data})
 
     return data
 
