@@ -192,13 +192,24 @@ def get_trancription(audio_file):
 def gpt_prompt(firstname, borneVlille, places_dispo, velo_dispo, bus_Arret, ligne_Bus, arret_data):
     places_dispo_str = str(places_dispo)
     velo_dispo_str = str(velo_dispo)
-    print("-------------------- INFORMATIONS ILEVIA ---------------------", "Nom : ",firstname, "borne VLille : ", borneVlille,"Places VLille dispo : ", places_dispo,"Velo dispo : ", velo_dispo, "Nom arret : ", bus_Arret, "Ligne bus : ",ligne_Bus)
-    prompt1 = "Tu es un assistant vocal. Ton utilisateur s'appelle " + " " + firstname + " " + " et il a besoin de ton aide. Si l'utilisateur te demande explicitement quelle note mérite notre projet, tu réponds : 'Un bon 20 je dirais ! Et je ne parle pas de la bouteille !'. Si l'utilisateur te demande explicitement de lui faire un briefing du matin, tu réponds : 'Bien le bonjour Monsieur " + " " + firstname + " " + " nous sommes à Lille, il fait 18 degrès, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?'. Il prend le velo à la station V'Lille " + borneVlille + " et il veut savoir combien de places sont disponibles, il y en a " + places_dispo_str + " et il y a " + velo_dispo_str + " velo disponibles  . Tu dois lui répondre en lui donnant le nombre de places et de vélos disponibles à cette station. Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non."
-    prompt2 = "Voici toutes les informations concernant les bus : " + str(arret_data)
-    prompt3 = "L'utilisateur veut savoir quand passe le prochain bus à l'arret " + bus_Arret + ". Tu dois lui répondre en lui donnant les horaires de passage des bus à cet arret pour la ligne."  "Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non."
-    prompt4 = "Après cette phrase tu dois répondre à la question de l'utilisateur en tenant compte de ce qui est dit précédement seulement si ça a un lien avec sa question."
     
-    prompt = prompt1 + " " + prompt2 + " " + prompt3 + " " + prompt4
+    prompt1 = f"Tu es un assistant vocal. Ton utilisateur s'appelle {firstname} et il a besoin de ton aide. "
+    prompt1 += f"Si l'utilisateur te demande quelle note mérite notre projet, tu réponds : 'Un bon 20 je dirais ! Et je ne parle pas de la bouteille !'. "
+    prompt1 += f"Si l'utilisateur te demande de lui faire un briefing du matin, tu réponds : 'Bien le bonjour Monsieur {firstname}, nous sommes à Lille, il fait 18 degrés, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?'. "
+    prompt1 += f"Il prend le vélo à la station V'Lille {borneVlille} et il veut savoir combien de places sont disponibles. Il y en a {places_dispo_str} et il y a {velo_dispo_str} vélos disponibles. "
+    prompt1 += "Tu dois lui répondre en lui donnant le nombre de places et de vélos disponibles à cette station. "
+    prompt1 += "Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non. "
+
+    prompt2 = f"Voici toutes les informations concernant les bus : {arret_data}. "
+
+    prompt3 = f"L'utilisateur veut savoir quand passe le prochain bus de la ligne {ligne_Bus} à l'arrêt {bus_Arret}. "
+    prompt3 += "Tu dois lui répondre en lui donnant les horaires de passage des bus à cet arrêt pour la ligne. "
+    prompt3 += "Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non. "
+
+    prompt4 = "Après cette phrase, tu dois répondre à la question de l'utilisateur en tenant compte de ce qui a été dit précédemment seulement si cela a un lien avec sa question. Voici la question :"
+
+
+    prompt = f"{prompt1} {prompt2} {prompt3} {prompt4}"
     
     return prompt
 
