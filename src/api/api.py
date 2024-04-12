@@ -321,10 +321,6 @@ def get_arret_info(request, userID: int):
 
     return data
 
-
-
-import requests
-
 @api.get("/ilevia/bornes")
 def get_vlille_stations():
     url = '/api/explore/v2.1/catalog/datasets/vlille-realtime/records?limit=20'
@@ -351,6 +347,43 @@ def get_vlille_stations():
         print(response.status_code)
         return None
 
+
+@api.get("/ilevia/stations")
+def get_stations(request):
+    try:
+        with open('datasets/ilevia_stations.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            unique_station_names = set()  
+            for station in data:
+                unique_station_names.add(station['stop_name']) 
+
+            station_names = list(unique_station_names)  
+
+            return {"station_names": station_names},
+        
+    except FileNotFoundError:
+        return {"error": "Le fichier des stations n'a pas été trouvé"},
+    except Exception as e:
+        return {"error": f"Une erreur s'est produite: {str(e)}"},
+
+@api.get("/ilevia/bus_ligne")
+def get_bus(request):
+    try:
+        with open('datasets/lignes_bus.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            unique_ligne_names = set()  
+            for station in data:
+                unique_ligne_names.add(station['ligne']) 
+
+            unique_ligne_names.add("TRAM")
+            ligne_names = list( unique_ligne_names)  
+
+            return {"ligne_names": ligne_names},
+        
+    except FileNotFoundError:
+        return {"error": "Le fichier des stations n'a pas été trouvé"},
+    except Exception as e:
+        return {"error": f"Une erreur s'est produite: {str(e)}"},
     
 
 ################################################################################################
