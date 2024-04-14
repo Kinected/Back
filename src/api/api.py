@@ -59,6 +59,56 @@ def spotify(request, userID: int):
     access_token = get_spotify_access_token(spotify.refresh_token)
     return access_token
 
+@api.delete("/spotify")
+def delete_spotify(request, userID: int):
+    userID = int(userID)
+    user = UserProfile.objects.get(id=userID)
+    spotify = Spotify_Credentials.objects.get(user=user)
+    spotify.delete()
+    return {"success": True}
+
+class SpotifySchema(Schema):
+    code: str
+
+@api.post("/spotify")
+def post_spotify(request, userID: int, payload: SpotifySchema):
+    user = UserProfile.objects.get(id=userID)
+    code = payload.code
+    print(code)
+    spotify = Spotify_Credentials.objects.create(user=user)
+    return {"success": True}
+
+@api.delete("/mauria")
+def delete_mauria(request, userID: int):
+    userID = int(userID)
+    user = UserProfile.objects.get(id=userID)
+    mauria = Mauria_Credentials.objects.get(user=user)
+    mauria.delete()
+    return {"success": True}
+
+class MauriaSchema(Schema):
+    email: str
+    password: str
+
+@api.post("/mauria")
+def post_mauria(request, userID, payload: MauriaSchema):
+    user = UserProfile.objects.get(id=userID)
+    print(payload.email, payload.password)
+    mauria = Mauria_Credentials.objects.create(user=user, email=payload.email, mdp=payload.password)
+    return {"success": True}
+
+@api.get("/mauria/credentials")
+def get_mauria_credentials(request, userID: int):
+    user = UserProfile.objects.get(id=userID)
+    try :
+        mauria = Mauria_Credentials.objects.get(user=user)
+        password = mauria.mdp
+        password = password[0] + password[1] + "*" * (len(password)-2)
+        return {"email": mauria.email, "password": password}
+    except:
+        return None
+
+
 
 async def get_mauria_courses(username, password):
     endpoint = "https://mauriaapi.fly.dev/planning?start=2024-04-02"
@@ -113,6 +163,13 @@ async def send_websocket_create_user(id, face):
     await websocket.send(json.dumps(payload))
 
 
+@api.delete("/user")
+def delete_user(request, userID: int):
+    user = UserProfile.objects.get(id=int(userID))
+    user.delete()
+    return {"success": True}
+
+
 class ImageSchema(Schema):
     image: str
 
@@ -148,6 +205,7 @@ async def post_user(request, img: ImageSchema):
     face_encoding = face_encodings[0]
 
     user = await sync_to_async(UserProfile.objects.create)()
+    user.firstname = "Utilisateur "+ str(user.id)
     await sync_to_async(user.save)()
 
     image_pil.save(f"images/{user.id}.jpg")
@@ -161,6 +219,12 @@ async def post_user(request, img: ImageSchema):
 
     user_mauria = await sync_to_async(Mauria_Credentials.objects.create)(user=user)
     await sync_to_async(user_mauria.save)()
+
+    user_ilevia_bus = await sync_to_async(Ilevia_Bus.objects.create)(user=user)
+    await sync_to_async(user_ilevia_bus.save)()
+
+    user_ilevia_vlille = await sync_to_async(Ilevia_Vlille.objects.create)(user=user)
+    await sync_to_async(user_ilevia_vlille.save)()
 
     await send_websocket_create_user(user.id, face.get_values())
 
@@ -211,6 +275,13 @@ def get_user(request, userID: int):
         "gotIleviaBus": gotIleviaBus,
         "gotIleviaVlille": gotIleviaVlille
     }
+
+
+@api.get("/users")
+def get_users(request):
+    users = UserProfile.objects.all()
+    data = [{"id": user.id, "firstname": user.firstname, "lastname": user.lastname} for user in users]
+    return data
 
 
 @api.get("/users/faces")
@@ -296,6 +367,18 @@ def audio_transcription(request):
     
     # return FileResponse('speech.mp3', media_type='audio/mpeg')
     return {"audio": base64_data}
+
+class UpdateUserSchema(Schema):
+    firstname: str
+    lastname: str
+
+@api.put("/user")
+def put_user(request, userID: int, payload: UpdateUserSchema):
+    user = UserProfile.objects.get(id=int(userID))
+    user.firstname = payload.firstname
+    user.lastname = payload.lastname
+    user.save()
+    return {"success": True}
     
     
 class UpdateFirstnameSchema(Schema):
@@ -305,6 +388,7 @@ class UpdateFirstnameSchema(Schema):
 
 @api.put("/user/firstname")
 def put_firstname(request, payload: UpdateFirstnameSchema):
+    print(payload.userID, payload.firstname)
     user = UserProfile.objects.get(id=payload.userID)
     user.firstname = payload.firstname
     user.save()

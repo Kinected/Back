@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -140,3 +141,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
 ]
+
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'images')  # 'BASE_DIR' est la racine du projet
+MEDIA_URL = '/public/'  # Accédera aux images via l'URL '/media/'
+
