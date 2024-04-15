@@ -11,9 +11,11 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+print(BASE_DIR)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -26,14 +28,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+
 # Application definition
 
 INSTALLED_APPS = [
     "daphne",
-    "api",
-    "swipes",
-    "faces",
-    "sensors",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -41,6 +40,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
+    "api",
+    "swipes",
+    "faces",
+    "sensors",
+    "mauria",
+    "spotify",
+    "ilevia",
+    "models",
 ]
 
 ASGI_APPLICATION = "kinected.asgi.application"
@@ -140,3 +147,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
 ]
+
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'images')  # 'BASE_DIR' est la racine du projet
+MEDIA_URL = '/public/'  # Accédera aux images via l'URL '/media/'
+
