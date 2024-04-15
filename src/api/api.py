@@ -1,6 +1,8 @@
 import base64
 import json
 import os
+
+import face_recognition
 from dotenv import load_dotenv
 from fastapi import APIRouter
 from ninja import NinjaAPI, Schema
@@ -155,18 +157,4 @@ def audio_transcription(request):
 #     await send_websocket_create_user(payload["userID"], payload["face"])
 #
 #
-# @api.get("/ObamaFace")
-# def test(request):
-#     '''
-#     all users are updated with the face of Obama
-#     '''
-#     obama_image = face_recognition.load_image_file("images/obama.jpg")
-#     obama_face_encoding = face_recognition.face_encodings(obama_image)[0].tolist()
-#
-#     users = UserProfile.objects.all()
-#     for user in users:
-#         face = Face.objects.get(user=user)
-#         face.set_values(obama_face_encoding)
-#         face.save()
-#
-#     return {"success": True}
+

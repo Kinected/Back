@@ -23,7 +23,7 @@ def get_spotify_access_token(refresh_token):
     return r.json().get('access_token')
 
 
-@router.get("/spotify")
+@router.get("/")
 def spotify(request, userID: int):
     userID = int(userID)
     user: UserProfile = UserProfile.objects.get(id=userID)
@@ -32,7 +32,7 @@ def spotify(request, userID: int):
     return access_token
 
 
-@router.delete("/spotify")
+@router.delete("/")
 def delete_spotify(request, userID: int):
     userID = int(userID)
     user = UserProfile.objects.get(id=userID)
@@ -45,7 +45,7 @@ class SpotifySchema(Schema):
     code: str
 
 
-@router.post("/spotify")
+@router.post("/")
 def post_spotify(request, userID: int, payload: SpotifySchema):
     user = UserProfile.objects.get(id=userID)
     code = payload.code
