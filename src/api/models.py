@@ -67,3 +67,8 @@ class Ilevia_Bus(models.Model):
 class Ilevia_Vlille(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
     borne_id = models.CharField(max_length=4)
+
+class Ligne(models.Model):
+    user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    station = models.CharField(max_length=100)

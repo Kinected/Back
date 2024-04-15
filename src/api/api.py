@@ -20,7 +20,7 @@ import shutil
 from fastapi import APIRouter
 router = APIRouter()
 
-from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus, Ligne
 
 api = NinjaAPI()
 websocket = None
@@ -384,6 +384,24 @@ def get_bus(request):
         return {"error": "Le fichier des stations n'a pas été trouvé"},
     except Exception as e:
         return {"error": f"Une erreur s'est produite: {str(e)}"},
+
+class CreateBus(Schema):
+    station : str
+    ligne : str
+@api.post("/ilevia/bus")
+def create_bus(request, item: CreateBus, userID):
+    try:
+        station = item.station
+        ligne = item.ligne
+        ligne_user = Ligne.objects.create(name=ligne, station=station, user_id=userID)
+        return {"message": "Nouvelle ligne créée avec succès"}
+    except FileNotFoundError:
+        return {"error": "Le fichier des stations n'a pas été trouvé"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
     
 
 ################################################################################################
