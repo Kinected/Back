@@ -173,6 +173,9 @@ cython_debug/
 
 
 src/audio.mp3
+
 src/speech.mp3
 src/speech.mp3.gz
 src/awadji
+src/images
+src/audio
