@@ -188,10 +188,7 @@ def get_trancription(audio_file):
         return transcription.text
 
 
-
-def gpt_prompt(firstname, borneVlille, places_dispo, velo_dispo, bus_Arret, ligne_Bus, arret_data):
-    places_dispo_str = str(places_dispo)
-    velo_dispo_str = str(velo_dispo)
+def gpt_prompt(firstname, borneVlille, places_dispo, velo_dispo):
 
     prompt1 = f"Tu es un assistant vocal. Ton utilisateur s'appelle {firstname} et il a besoin de ton aide."
     prompt1 += f"SI ET SEULEMENT SI ton utilisateur te demande combien de places sont disponibles à sa station V'Lille {borneVlille}, tu dois lui répondre qu'il y a {places_dispo} places disponibles et {velo_dispo} vélos disponibles. L'utilisateur peut te poser n'importe quelle question, tu dois adapter ta réponse en fonction de la question."
@@ -209,28 +206,6 @@ def get_response(question, userID):
 
     borne_info = get_borne_info(None, userID)
 
-    arret_info = get_arret_info(None, userID)
-
-    ligne_bus = 'L5'  # Définissez ligne_bus avant la boucle
-    arret_data = 'CORMONTAIGNE'  # Définissez arret_data avant la boucle
-
-    if arret_info and 'arret_data' in arret_info[0] and isinstance(arret_info[0]['arret_data'], dict):
-        arret_name = arret_info[0]['arret_name']
-        arret_data = arret_info[0]['arret_data']  # Mettez à jour arret_data
-        if 'results' in arret_data:
-            for bus in arret_data['results']:
-                print(bus)  # Imprimez bus pour voir à quoi il ressemble
-                if isinstance(bus, dict) and 'fields' in bus and 'codeligne' in bus['fields']:
-                    ligne_bus = bus['fields']['codeligne']
-                    print(f"Le nom de l'arrêt est : {arret_name} et la ligne de bus est : {ligne_bus}")
-                else:
-                    print("Bus data is not in the expected format.")
-        else:
-            print("Aucune information d'arrêt disponible.")
-    else:
-        print("Aucune information d'arrêt disponible.")
-
-
     if borne_info:
         borne_name = borne_info[0]['name']
         places_dispo = borne_info[0]['nbPlacesDispo']
@@ -239,7 +214,7 @@ def get_response(question, userID):
     else:
         print("Aucune information de borne disponible.")
 
-    prompt = gpt_prompt(user.firstname, borne_name, places_dispo, velo_dispo, arret_name, ligne_bus, arret_data)
+    prompt = gpt_prompt(user.firstname, borne_name, places_dispo, velo_dispo)
 
     chat_completion = client.chat.completions.create(
 
