@@ -22,7 +22,7 @@ class MauriaSchema(Schema):
 def post_mauria(request, userID, payload: MauriaSchema):
     user = UserProfile.objects.get(id=userID)
     print(payload.email, payload.password)
-    mauria = Mauria_Credentials.objects.create(user=user, email=payload.email, mdp=payload.password)
+    mauria = Mauria_Credentials.objects.create(user=user, email=payload.email, password=payload.password)
     return {"success": True}
 
 @router.get("/credentials")
@@ -30,7 +30,7 @@ def get_mauria_credentials(request, userID: int):
     user = UserProfile.objects.get(id=userID)
     try :
         mauria = Mauria_Credentials.objects.get(user=user)
-        password = mauria.mdp
+        password = mauria.password
         password = password[0] + password[1] + "*" * (len(password)-2)
         return {"email": mauria.email, "password": password}
     except:
@@ -56,7 +56,7 @@ async def get_mauria_courses(username, password):
 async def update_mauria(request, userID: int):
     user = await sync_to_async(UserProfile.objects.get)(id=int(userID))
     mauria = await sync_to_async(Mauria_Credentials.objects.get)(user=user)
-    planning = await get_mauria_courses(mauria.email, mauria.mdp)
+    planning = await get_mauria_courses(mauria.email, mauria.password)
 
     planning = [] if planning == {} else planning
 

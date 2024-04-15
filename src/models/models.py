@@ -44,7 +44,7 @@ class Spotify_Credentials(models.Model):
 class Mauria_Credentials(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
     email = models.EmailField(max_length=50, default=os.getenv('MAURIA_EMAIL'))
-    mdp = models.CharField(max_length=128, default=os.getenv('MAURIA_MDP'))
+    password = models.CharField(max_length=128, default=os.getenv('MAURIA_MDP'))
 
     def __str__(self):
         return f"Mauria Credentials for {self.email}"
@@ -67,10 +67,10 @@ class Mauria_Plannings(models.Model):
 
 class Ilevia_Bus(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
-    arret_id = models.CharField(max_length=50, default="CORMONTAIGNE")
+    station = models.CharField(max_length=50, default="CORMONTAIGNE")
     line = models.CharField(max_length=50, default="L5")
 
 
 class Ilevia_Vlille(models.Model):
     user = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
-    borne_id = models.CharField(max_length=4, default="28")
+    station = models.CharField(max_length=4, default="28")

@@ -183,3 +183,19 @@ def put_firstname(request, payload: UpdateFirstnameSchema):
     return {"success": True}
 
 
+@router.get("/ObamaFace")
+def test(request):
+    '''
+    all users are updated with the face of Obama
+    '''
+    obama_image = face_recognition.load_image_file("images/obama.jpg")
+    obama_face_encoding = face_recognition.face_encodings(obama_image)[0].tolist()
+
+    users = UserProfile.objects.all()
+    for user in users:
+        face = UserFace.objects.get(user=user)
+        face.set_values(obama_face_encoding)
+        face.save()
+
+    return {"success": True}
+

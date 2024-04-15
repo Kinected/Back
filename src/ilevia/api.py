@@ -22,20 +22,20 @@ def get_borne_data(borne_id):
 def get_borne_info(request, userID: int):
     user = UserProfile.objects.get(id=int(userID))
     ilevia = Ilevia_Vlille.objects.filter(user=user)
-    ilevia_bornes_id = [borne.borne_id for borne in ilevia]
+    ilevia_station_id = [station.station for station in ilevia]
 
-    print(ilevia_bornes_id)
+    print(ilevia_station_id)
 
     data = []
-    for id in ilevia_bornes_id:
-        borne_data = get_borne_data(id)
-        print(borne_data)
-        if borne_data:
+    for id in ilevia_station_id:
+        station_data = get_borne_data(id)
+        print(station_data)
+        if station_data:
             data.append({
                 "id": id,
-                "name": borne_data['results'][0]['nom'],
-                "nbPlacesDispo": borne_data['results'][0]['nbplacesdispo'],
-                "nbVelosDispo": borne_data['results'][0]['nbvelosdispo']
+                "name": station_data['results'][0]['nom'],
+                "nbPlacesDispo": station_data['results'][0]['nbplacesdispo'],
+                "nbVelosDispo": station_data['results'][0]['nbvelosdispo']
             })
 
     return data
@@ -70,26 +70,13 @@ def get_arret_info(request, userID: int):
 
     bus_stops_and_lines = defaultdict(set)
 
-    # get all the line of each arret knowing that ilevia contain multiple time the same arret with different line
-
     data = []
     for index in ilevia:
-        bus_stops_and_lines[index.arret_id].add(index.line)
-
-    for arret, lines in bus_stops_and_lines.items():
-        arret_data = get_arret_data(arret, lines)
-        if arret_data:
-            data.append(arret_data)
-        # else :
-        #     data.append({
-        #         "results" : [
-        #             {
-        #                 "codeLigne": index.line,
-        #                 "nomStation": index.arret_id,
-        #             }
-        #         ]
-        #     })
-    print(bus_stops_and_lines)
+        bus_stops_and_lines[index.station].add(index.line)
+    for station, lines in bus_stops_and_lines.items():
+        station_data = get_arret_data(station, lines)
+        if station_data:
+            data.append(station_data)
     return data
 
 
