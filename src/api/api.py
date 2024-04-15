@@ -48,18 +48,56 @@ def get_trancription(audio_file):
         return transcription.text
 
 
-def get_response(question):
+def gpt_prompt(firstname, borneVlille, places_dispo, velo_dispo):
+
+    prompt1 = f"Tu es un assistant vocal. Ton utilisateur s'appelle {firstname} et il a besoin de ton aide."
+    prompt1 += f"SI ET SEULEMENT SI ton utilisateur te demande combien de places sont disponibles à sa station V'Lille {borneVlille}, tu dois lui répondre qu'il y a {places_dispo} places disponibles et {velo_dispo} vélos disponibles. L'utilisateur peut te poser n'importe quelle question, tu dois adapter ta réponse en fonction de la question."
+    prompt2 = "Voici la question de ton utilisateur, tu y réponds obligatoirement :"
+
+    prompt = f"{prompt1} {prompt2}"
+
+    return prompt
+
+conversation = []
+
+def get_response(question, userID):
+
+    user = UserProfile.objects.get(id = int(userID))
+
+    borne_info = get_borne_info(None, userID)
+
+    if borne_info:
+        borne_name = borne_info[0]['name']
+        places_dispo = borne_info[0]['nbPlacesDispo']
+        velo_dispo = borne_info[0]['nbVelosDispo']
+        print(f"Le nombre de places dispo est : {velo_dispo}")
+    else:
+        print("Aucune information de borne disponible.")
+
+    prompt = gpt_prompt(user.firstname, borne_name, places_dispo, velo_dispo)
+
     chat_completion = client.chat.completions.create(
+
         messages=[
             {
                 "role": "user",
-                "content": question,
+                "content": prompt + " " + question,
             }
         ],
         model="gpt-3.5-turbo",
     )
 
     response = chat_completion.choices[0].message.content
+
+    # Ajoutez la question et la réponse à la conversation
+    conversation.append({
+        "role": "user",
+        "content": question,
+    })
+    conversation.append({
+        "role": "assistant",
+        "content": response,
+    })
 
     return response
 
@@ -81,10 +119,10 @@ def audio(request):
 
 
 @api.post("/audio/chatvoc")
-def audio(request):
+def audio(request, userID):
     audio_file = request.FILES['audio']
     question = get_trancription(audio_file)
-    response = get_response(question)
+    response = get_response(question, userID)
     # audio_transcription = get_audio_transcription(response)
     print("traitement fichier audio")
     get_audio_transcription(response)
@@ -108,6 +146,90 @@ def audio_transcription(request):
     # return FileResponse('speech.mp3', media_type='audio/mpeg')
     return {"audio": base64_data}
 
+
+
+class UpdateUserSchema(Schema):
+    firstname: str
+    lastname: str
+
+@api.put("/user")
+def put_user(request, userID: int, payload: UpdateUserSchema):
+    user = UserProfile.objects.get(id=int(userID))
+    user.firstname = payload.firstname
+    user.lastname = payload.lastname
+    user.save()
+    return {"success": True}
+
+
+class UpdateFirstnameSchema(Schema):
+    userID: int
+    firstname: str
+
+
+@api.put("/user/firstname")
+def put_firstname(request, payload: UpdateFirstnameSchema):
+    print(payload.userID, payload.firstname)
+    user = UserProfile.objects.get(id=payload.userID)
+    user.firstname = payload.firstname
+    user.save()
+    return {"success": True}
+
+
+def get_borne_data(borne_id):
+    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/vlille-realtime/records?limit=20&refine=libelle%3A%22"+str(borne_id)+"%22"
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(response.status_code)
+        return None
+
+
+@api.get("/ilevia/borne")
+def get_borne_info(request, userID: int):
+    user = UserProfile.objects.get(id=int(userID))
+    ilevia = Ilevia_Vlille.objects.filter(user=user)
+    ilevia_bornes_id = [borne.borne_id for borne in ilevia]
+
+    print(ilevia_bornes_id)
+
+    data = []
+    for id in ilevia_bornes_id:
+        borne_data = get_borne_data(id)
+        print(borne_data)
+        if borne_data:
+            data.append({
+                "id": id,
+                "name": borne_data['results'][0]['nom'],
+                "nbPlacesDispo": borne_data['results'][0]['nbplacesdispo'],
+                "nbVelosDispo": borne_data['results'][0]['nbvelosdispo']
+            })
+
+    return data
+    
+    
+
+def get_arret_data(station_name, lines):
+    url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/ilevia-prochainspassages/records?limit=20&refine=nomstation%3A%22" + str(
+        station_name) + "%22"
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+
+        # filter data with line
+        data = [record for record in data['results'] if record['codeligne'] in lines]
+        organized_data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+
+        # Parcourir les données et ajouter chaque dictionnaire à la liste correspondante
+        for item in data:
+            organized_data[item['nomstation']][item['codeligne']][item['sensligne']].append(item)
+
+        return organized_data
+    else:
+        print(response.status_code)
+        return None
 
 
 # ################################################################################################
