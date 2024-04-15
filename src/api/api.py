@@ -20,7 +20,7 @@ import shutil
 from fastapi import APIRouter
 router = APIRouter()
 
-from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus, Ligne
+from .models import UserProfile, Mauria_Credentials, Spotify_Credentials, Face, Mauria_Plannings, Ilevia_Vlille, Ilevia_Bus
 
 api = NinjaAPI()
 websocket = None
@@ -386,23 +386,41 @@ def get_bus(request):
         return {"error": f"Une erreur s'est produite: {str(e)}"},
 
 class CreateBus(Schema):
-    station : str
-    ligne : str
-@api.post("/ilevia/bus")
-def create_bus(request, item: CreateBus, userID):
+    station: str
+    line: str
+
+@api.post("/api/ilevia/bus")
+def create_bus(request, item: CreateBus, userID: int):
+    user = UserProfile.objects.get(id = int(userID))
     try:
         station = item.station
-        ligne = item.ligne
-        ligne_user = Ligne.objects.create(name=ligne, station=station, user_id=userID)
-        return {"message": "Nouvelle ligne créée avec succès"}
-    except FileNotFoundError:
-        return {"error": "Le fichier des stations n'a pas été trouvé"}
+        line = item.line
+
+        bus = Ilevia_Bus.objects.create(user = user, line = line, arret_id = station)
+        bus.save()
+        
+        return {"message": "Nouvelle ligne de bus créée avec succès"}
+    except Exception as e:
+        return {"error": str(e)}
+    
+
+class CreateVelo(Schema):
+    libelle: str
+
+@api.post("/ilevia/velo")
+def create_station_velo(request, item: CreateVelo, userID: int):
+    user = UserProfile.objects.get(id=int(userID))
+    try:
+        libelle = item.libelle
+
+        station_velo = Ilevia_Vlille.objects.create(user=user, borne_id=libelle)
+        station_velo.save()
+        
+        return {"message": "Nouvelle station de vélo créée avec succès"}
     except Exception as e:
         return {"error": str(e)}
 
 
-
-    
 
 ################################################################################################
 ##########################################Debug routes##########################################
