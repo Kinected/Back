@@ -145,6 +145,90 @@ def audio_transcription(request):
 
     # return FileResponse('speech.mp3', media_type='audio/mpeg')
     return {"audio": base64_data}
+    
+ 
+
+
+
+
+
+
+
+
+@api.get("/ilevia/stations")
+def get_stations(request):
+    try:
+        with open('datasets/ilevia_stations.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            unique_station_names = set()  
+            for station in data:
+                unique_station_names.add(station['stop_name']) 
+
+            station_names = list(unique_station_names)  
+
+            return {"station_names": station_names},
+        
+    except FileNotFoundError:
+        return {"error": "Le fichier des stations n'a pas été trouvé"},
+    except Exception as e:
+        return {"error": f"Une erreur s'est produite: {str(e)}"},
+
+@api.get("/ilevia/bus_ligne")
+def get_bus(request):
+    try:
+        with open('datasets/lignes_bus.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            unique_ligne_names = set()  
+            for station in data:
+                unique_ligne_names.add(station['ligne']) 
+
+            unique_ligne_names.add("TRAM")
+            ligne_names = list( unique_ligne_names)  
+
+            return {"ligne_names": ligne_names},
+        
+    except FileNotFoundError:
+        return {"error": "Le fichier des stations n'a pas été trouvé"},
+    except Exception as e:
+        return {"error": f"Une erreur s'est produite: {str(e)}"},
+
+      
+class CreateBus(Schema):
+    station: str
+    line: str
+
+@api.post("/api/ilevia/bus")
+def create_bus(request, item: CreateBus, userID: int):
+    user = UserProfile.objects.get(id = int(userID))
+    try:
+        station = item.station
+        line = item.line
+
+        bus = Ilevia_Bus.objects.create(user = user, line = line, arret_id = station)
+        bus.save()
+        
+        return {"message": "Nouvelle ligne de bus créée avec succès"}
+    except Exception as e:
+        return {"error": str(e)}
+    
+
+class CreateVelo(Schema):
+    libelle: str
+
+@api.post("/ilevia/velo")
+def create_station_velo(request, item: CreateVelo, userID: int):
+    user = UserProfile.objects.get(id=int(userID))
+    try:
+        libelle = item.libelle
+
+        station_velo = Ilevia_Vlille.objects.create(user=user, borne_id=libelle)
+        station_velo.save()
+        
+        return {"message": "Nouvelle station de vélo créée avec succès"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 
 
 
