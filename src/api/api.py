@@ -192,34 +192,23 @@ def get_trancription(audio_file):
 def gpt_prompt(firstname, borneVlille, places_dispo, velo_dispo, bus_Arret, ligne_Bus, arret_data):
     places_dispo_str = str(places_dispo)
     velo_dispo_str = str(velo_dispo)
-    
-    prompt1 = f"Tu es un assistant vocal. Ton utilisateur s'appelle {firstname} et il a besoin de ton aide. "
-    prompt1 += f"Si l'utilisateur te demande quelle note mérite notre projet, tu réponds : 'Un bon 20 je dirais ! Et je ne parle pas de la bouteille !'. "
-    prompt1 += f"Si l'utilisateur te demande de lui faire un briefing du matin, tu réponds : 'Bien le bonjour Monsieur {firstname}, nous sommes à Lille, il fait 18 degrés, le soleil est au rendez-vous, comment puis-je t'aider aujourd'hui ?'. "
-    prompt1 += f"Il prend le vélo à la station V'Lille {borneVlille} et il veut savoir combien de places sont disponibles. Il y en a {places_dispo_str} et il y a {velo_dispo_str} vélos disponibles. "
-    prompt1 += "Tu dois lui répondre en lui donnant le nombre de places et de vélos disponibles à cette station. "
-    prompt1 += "Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non. "
 
-    prompt2 = f"Voici toutes les informations concernant les bus : {arret_data}. "
+    prompt1 = f"Tu es un assistant vocal. Ton utilisateur s'appelle {firstname} et il a besoin de ton aide."
+    prompt1 += f"SI ET SEULEMENT SI ton utilisateur te demande combien de places sont disponibles à sa station V'Lille {borneVlille}, tu dois lui répondre qu'il y a {places_dispo} places disponibles et {velo_dispo} vélos disponibles. L'utilisateur peut te poser n'importe quelle question, tu dois adapter ta réponse en fonction de la question."
+    prompt2 = "Voici la question de ton utilisateur, tu y réponds obligatoirement :"
 
-    prompt3 = f"L'utilisateur veut savoir quand passe le prochain bus de la ligne {ligne_Bus} à l'arrêt {bus_Arret}. "
-    prompt3 += "Tu dois lui répondre en lui donnant les horaires de passage des bus à cet arrêt pour la ligne. "
-    prompt3 += "Tu dois aussi lui dire si tu as réussi à obtenir ces informations ou non. "
+    prompt = f"{prompt1} {prompt2}"
 
-    prompt4 = "Après cette phrase, tu dois répondre à la question de l'utilisateur en tenant compte de ce qui a été dit précédemment seulement si cela a un lien avec sa question. Voici la question :"
-
-
-    prompt = f"{prompt1} {prompt2} {prompt3} {prompt4}"
-    
     return prompt
 
+conversation = []
 
 def get_response(question, userID):
-    
+
     user = UserProfile.objects.get(id = int(userID))
 
     borne_info = get_borne_info(None, userID)
-    
+
     arret_info = get_arret_info(None, userID)
 
     ligne_bus = 'L5'  # Définissez ligne_bus avant la boucle
@@ -240,8 +229,8 @@ def get_response(question, userID):
             print("Aucune information d'arrêt disponible.")
     else:
         print("Aucune information d'arrêt disponible.")
-    
-    
+
+
     if borne_info:
         borne_name = borne_info[0]['name']
         places_dispo = borne_info[0]['nbPlacesDispo']
@@ -249,11 +238,11 @@ def get_response(question, userID):
         print(f"Le nombre de places dispo est : {velo_dispo}")
     else:
         print("Aucune information de borne disponible.")
-    
+
     prompt = gpt_prompt(user.firstname, borne_name, places_dispo, velo_dispo, arret_name, ligne_bus, arret_data)
-    
+
     chat_completion = client.chat.completions.create(
-        
+
         messages=[
             {
                 "role": "user",
@@ -264,6 +253,16 @@ def get_response(question, userID):
     )
 
     response = chat_completion.choices[0].message.content
+    
+    # Ajoutez la question et la réponse à la conversation
+    conversation.append({
+        "role": "user",
+        "content": question,
+    })
+    conversation.append({
+        "role": "assistant",
+        "content": response,
+    })
 
     return response
 
@@ -274,7 +273,7 @@ def get_audio_transcription(response):
     input=response
 )
     audio_transcription = response.stream_to_file('speech.mp3')
-    
+
     return FileResponse('speech.mp3', media_type='audio/mpeg')
 
 @api.post("/audio/transcription")
@@ -292,7 +291,7 @@ def audio(request, userID):
     # audio_transcription = get_audio_transcription(response)
     print("traitement fichier audio")
     get_audio_transcription(response)
-        
+
     return {"question": question, "response": response}
 
 @api.get("/audio/transcription")
@@ -308,11 +307,11 @@ def audio_transcription(request):
     with open('speech.mp3.gz', 'rb') as f:
         data = f.read()
         base64_data = base64.b64encode(data).decode('utf-8')
-    
+
     # return FileResponse('speech.mp3', media_type='audio/mpeg')
     return {"audio": base64_data}
-    
-    
+
+
 class UpdateFirstnameSchema(Schema):
     userID: int
     firstname: str
@@ -358,8 +357,8 @@ def get_borne_info(request, userID: int):
             })
 
     return data
-    
-    
+
+
 
 def get_arret_data(station_name, line):
     url = f"https://opendata.lillemetropole.fr/api/explore/v2.1/catalog/datasets/ilevia-prochainspassages/records?limit=20&refine=codeligne%3A%22"+str(line)+"%22&refine=nomstation%3A%22"+str(station_name)+"%22"
@@ -410,13 +409,13 @@ def get_vlille_stations():
                 'station_id': station_id,
                 'city': city
             })
-            
+
         return vlille_data
     else:
         print(response.status_code)
         return None
 
-    
+
 
 ################################################################################################
 ##########################################Debug routes##########################################
