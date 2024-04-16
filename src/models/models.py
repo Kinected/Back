@@ -1,6 +1,5 @@
 import json
 import os
-
 from django.db import models
 from dotenv import load_dotenv
 

@@ -1,5 +1,5 @@
 from asgiref.sync import sync_to_async
-from ninja import Router, Schema, File, UploadedFile
+from ninja import Router, Schema
 from models.models import UserProfile, Mauria_Credentials, Mauria_Plannings
 import httpx
 import json
@@ -14,9 +14,11 @@ def delete_mauria(request, userID: int):
     mauria.delete()
     return {"success": True}
 
+
 class MauriaSchema(Schema):
     email: str
     password: str
+
 
 @router.post("/")
 def post_mauria(request, userID, payload: MauriaSchema):
@@ -24,6 +26,7 @@ def post_mauria(request, userID, payload: MauriaSchema):
     print(payload.email, payload.password)
     mauria = Mauria_Credentials.objects.create(user=user, email=payload.email, password=payload.password)
     return {"success": True}
+
 
 @router.get("/credentials")
 def get_mauria_credentials(request, userID: int):

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "spotify",
     "ilevia",
     "models",
+    "whisper",
 ]
 
 ASGI_APPLICATION = "kinected.asgi.application"

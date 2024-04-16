@@ -1,5 +1,5 @@
 from asgiref.sync import sync_to_async
-from ninja import Router, Schema, File, UploadedFile
+from ninja import Router, Schema
 import face_recognition
 from PIL import Image
 import numpy as np
