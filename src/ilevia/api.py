@@ -18,6 +18,52 @@ def get_borne_data(borne_id):
         return None
 
 
+@router.get("/bus/user")
+def get_user_bus_stations(request, userID: int):
+    user = UserProfile.objects.get(id=int(userID))
+    ilevia = Ilevia_Bus.objects.filter(user=user)
+    data = [{
+        "station" : station.station,
+        "line": station.line
+    } for station in ilevia]
+    return data
+
+
+class Bus (Schema):
+    station: str
+    line: str
+
+
+@router.delete("/bus")
+def delete_user_bus_station(request, userID: int,payload: Bus):
+    user = UserProfile.objects.get(id=int(userID))
+    ilevia = Ilevia_Bus.objects.get(user=user, station=payload.station, line=payload.line)
+    ilevia.delete()
+    return {"success": True}
+
+
+
+@router.post("/bus")
+def create_bus(request, item: Bus, userID: int):
+    user = UserProfile.objects.get(id=int(userID))
+    try:
+        station = item.station
+        line = item.line
+        try :
+            existing = Ilevia_Bus.objects.get(user=user, station=station, line=line)
+        except :
+            existing = None
+
+        if existing == None:
+            print(station, line)
+            bus = Ilevia_Bus.objects.create(user=user, line=line, station=station)
+            bus.save()
+            return {"message": "Nouvelle ligne de bus créée avec succès"}
+    except Exception as e:
+        print(e)
+        return {"error": str(e)}
+
+
 @router.get("/borne")
 def get_borne_info(request, userID: int):
     user = UserProfile.objects.get(id=int(userID))
