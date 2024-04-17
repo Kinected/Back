@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-8##o+695m!(#@2g^j#^07gysszvx2-y^ho4mqvh(2wq2m_*71h
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -142,12 +142,18 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+CORS_ALLOW_ALL_ORIGINS = True
+#
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:8000",
+#     "http://localhost:3000",
+#     "http://localhost:3001",
+#     "http://172.20.10.6:3001",
+#     "http://172.20.10.6:3002",
+#     "http://172:20.10.1:3001",
+#
+# ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "http://localhost:3001",
-]
 
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'images')  # 'BASE_DIR' est la racine du projet

@@ -53,10 +53,12 @@ def get_spotify_refresh_token(code):
         "Authorization": f"Basic {client_creds_b64.decode()}"
     }
     data = {
-        "grant_type": "authorization_code",
+        "redirect_uri": "http://172.20.10.6:3001/user",
+        "grant_type": "authorization_code",""
         "code": code,
     }
     r = requests.post(endpoint, data=data, headers=headers)
+    print(r.json())
     return r.json().get('refresh_token')
 
 
@@ -69,6 +71,7 @@ class SpotifySchema(Schema):
 def post_spotify(request, userID: int, payload: SpotifySchema):
     user = UserProfile.objects.get(id=userID)
     refresh_token = get_spotify_refresh_token(payload.code)
+    print(refresh_token)
     spotify = Spotify_Credentials.objects.create(user=user, refresh_token=refresh_token)
     spotify.save()
     return {"success": True}

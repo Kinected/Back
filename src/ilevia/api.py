@@ -106,9 +106,14 @@ def create_station_velo(request, item: Vlille, userID: int):
         if station_id is None:
             return {"error": "La station de vélo n'existe pas"}
         else :
-            vlille = Ilevia_Vlille.objects.create(user=user, station=station_id)
-            vlille.save()
-            return {"message": "Nouvelle station de vélo créée avec succès"}
+            try:
+                existing = Ilevia_Bus.objects.get(user=user, station=station_id)
+            except:
+                existing = None
+            if existing == None:
+                vlille = Ilevia_Vlille.objects.create(user=user, station=station_id)
+                vlille.save()
+                return {"message": "Nouvelle station de vélo créée avec succès"}
     except Exception as e:
         print(e)
         return {"error": str(e)}
