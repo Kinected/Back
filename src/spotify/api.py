@@ -44,7 +44,7 @@ def delete_spotify(request, userID: int):
 
 
 
-def get_spotify_refresh_token(code):
+def get_spotify_refresh_token(code, uri):
     client_creds = f"{os.getenv('CLIENT_ID')}:{os.getenv('CLIENT_SECRET')}"
     client_creds_b64 = base64.b64encode(client_creds.encode())
 
@@ -53,8 +53,8 @@ def get_spotify_refresh_token(code):
         "Authorization": f"Basic {client_creds_b64.decode()}"
     }
     data = {
-        "redirect_uri": "http://172.20.10.6:3001/user",
-        "grant_type": "authorization_code",""
+        "redirect_uri": uri,
+        "grant_type": "authorization_code",
         "code": code,
     }
     r = requests.post(endpoint, data=data, headers=headers)
@@ -65,13 +65,17 @@ def get_spotify_refresh_token(code):
 
 class SpotifySchema(Schema):
     code: str
+    redirect_uri: str
 
 
 @router.post("/")
 def post_spotify(request, userID: int, payload: SpotifySchema):
     user = UserProfile.objects.get(id=userID)
-    refresh_token = get_spotify_refresh_token(payload.code)
+    print(payload.redirect_uri)
+    refresh_token = get_spotify_refresh_token(payload.code, payload.redirect_uri)
     print(refresh_token)
+    if refresh_token is None:
+        refresh_token = os.getenv('SPOTIFY_REFRESH_TOKEN')
     spotify = Spotify_Credentials.objects.create(user=user, refresh_token=refresh_token)
     spotify.save()
     return {"success": True}
