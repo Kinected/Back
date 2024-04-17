@@ -2,7 +2,8 @@ from ninja import Router, Schema, File, UploadedFile
 import requests
 from models.models import UserProfile, Ilevia_Vlille, Ilevia_Bus
 from collections import defaultdict
-
+import json
+import requests
 router = Router(tags=["ilevia"])
 
 
@@ -33,6 +34,9 @@ class Bus (Schema):
     station: str
     line: str
 
+class Vlille (Schema):
+    station: str
+
 
 @router.delete("/bus")
 def delete_user_bus_station(request, userID: int,payload: Bus):
@@ -40,6 +44,27 @@ def delete_user_bus_station(request, userID: int,payload: Bus):
     ilevia = Ilevia_Bus.objects.get(user=user, station=payload.station, line=payload.line)
     ilevia.delete()
     return {"success": True}
+
+@router.delete("/vlille")
+def delete_user_vlille_station(request, userID: int,payload: Vlille):
+    user = UserProfile.objects.get(id=int(userID))
+
+    station = payload.station
+    data = get_stations()
+    # check if station exists and get the id
+    station_id = None
+    for station_data in data:
+        if station_data['station'] == station:
+            station_id = station_data['id']
+            break
+    print(station)
+    print(station_id)
+    if station_id is None:
+        return {"error": "La station de vélo n'existe pas"}
+    else:
+        ilevia = Ilevia_Vlille.objects.get(user=user, station=station_id)
+        ilevia.delete()
+        return {"success": True}
 
 
 
@@ -62,6 +87,32 @@ def create_bus(request, item: Bus, userID: int):
     except Exception as e:
         print(e)
         return {"error": str(e)}
+
+@router.post("/vlille")
+def create_station_velo(request, item: Vlille, userID: int):
+    user = UserProfile.objects.get(id=int(userID))
+    try:
+        station = item.station
+
+        data = get_stations()
+        # check if station exists and get the id
+        station_id = None
+        for station_data in data:
+            if station_data['station'] == station:
+                station_id = station_data['id']
+                break
+        print(station)
+        print(station_id)
+        if station_id is None:
+            return {"error": "La station de vélo n'existe pas"}
+        else :
+            vlille = Ilevia_Vlille.objects.create(user=user, station=station_id)
+            vlille.save()
+            return {"message": "Nouvelle station de vélo créée avec succès"}
+    except Exception as e:
+        print(e)
+        return {"error": str(e)}
+
 
 
 @router.get("/borne")
@@ -126,33 +177,24 @@ def get_arret_info(request, userID: int):
     return data
 
 
+@router.get("/vlille/all")
+def get_all_vlille(request):
+    data = get_stations()
+    return data
+
+def get_stations():
+    request = requests.get('https://transport.data.gouv.fr/gbfs/vlille/station_information.json')
+    request = request.json()
+
+    #get all stations and all id of stations
+    data = [{"station" : station['name'], "id" : station['station_id']} for station in request['data']['stations']]
+    # data = list(filter(lambda x: x['name'] and x['station_id'], request['data']['stations']))
 
 
-@router.get("/bornes")
-def get_vlille_stations():
-    url = '/api/explore/v2.1/catalog/datasets/vlille-realtime/records?limit=20'
+    return data
 
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
 
-        vlille_data = []
-        for record in data['records']:
-            fields = record['fields']
-            station_name = fields.get('nom')
-            station_id = fields.get('libelle')
-            city = fields.get('commune')
 
-            vlille_data.append({
-                'station_name': station_name,
-                'station_id': station_id,
-                'city': city
-            })
-
-        return vlille_data
-    else:
-        print(response.status_code)
-        return None
 
 
 
@@ -217,19 +259,7 @@ def get_vlille_stations():
 #     class CreateVelo(Schema):
 #         libelle: str
 #
-#     @api.post("/ilevia/velo")
-#     def create_station_velo(request, item: CreateVelo, userID: int):
-#         user = UserProfile.objects.get(id=int(userID))
-#         try:
-#             libelle = item.libelle
-#
-#             station_velo = Ilevia_Vlille.objects.create(user=user, borne_id=libelle)
-#             station_velo.save()
-#
-#             return {"message": "Nouvelle station de vélo créée avec succès"}
-#         except Exception as e:
-#             return {"error": str(e)}
-#
+
 #
 # ###########################
 #
